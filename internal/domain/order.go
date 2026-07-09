@@ -26,7 +26,7 @@ type Order struct {
 	ID      string
 	Cliente string
 	Items   []*OrderItem
-	Status  OrderStatus
+	status  OrderStatus
 }
 
 func NewOrder(id string, cliente string) *Order {
@@ -34,7 +34,7 @@ func NewOrder(id string, cliente string) *Order {
 		ID:      id,
 		Cliente: cliente,
 		Items:   []*OrderItem{},
-		Status:  OrderStatusPending,
+		status:  OrderStatusPending,
 	}
 }
 
@@ -49,9 +49,9 @@ func TotalSum(orders []*Order) float64 {
 }
 
 func PayOrder(order *Order) {
-	order.Status = OrderStatusPaid
+	order.status = OrderStatusPaid
 }
 
 func CancelOrder(order *Order) {
-	order.Status = OrderStatusCanceled
+	order.status = OrderStatusCanceled
 }
