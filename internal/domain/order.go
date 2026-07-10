@@ -1,5 +1,7 @@
 package domain
 
+import "strings"
+
 type OrderStatus string
 
 const (
@@ -23,19 +25,55 @@ func NewOrderItem(product *Product, quantity int, price float64) *OrderItem {
 }
 
 type Order struct {
-	ID      string
-	Cliente string
-	Items   []*OrderItem
-	Status  OrderStatus
+	ID       string
+	Customer string
+	Items    []*OrderItem
+	status   OrderStatus
 }
 
-func NewOrder(id string, cliente string) *Order {
-	return &Order{
-		ID:      id,
-		Cliente: cliente,
-		Items:   []*OrderItem{},
-		Status:  OrderStatusPending,
+func NewOrder(id string, customer string) (*Order, error) {
+	order := Order{
+		ID:       id,
+		Customer: customer,
+		Items:    []*OrderItem{},
+		status:   OrderStatusPending,
 	}
+
+	if err := order.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}
+
+func (o Order) Validate() error {
+	if strings.TrimSpace(o.Customer) == "" {
+		return ErrInvalidCustomer
+	}
+
+	if len(o.Items) == 0 {
+		return ErrEmptyOrder
+	}
+
+	for _, item := range o.Items {
+		if err := item.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (i OrderItem) Validate() error {
+	if i.Product == nil {
+		return ErrProductNotFound
+	}
+
+	if i.Quantity <= 0 {
+		return ErrInvalidQuantity
+	}
+
+	return nil
 }
 
 func TotalSum(orders []*Order) float64 {
@@ -49,9 +87,9 @@ func TotalSum(orders []*Order) float64 {
 }
 
 func PayOrder(order *Order) {
-	order.Status = OrderStatusPaid
+	order.status = OrderStatusPaid
 }
 
 func CancelOrder(order *Order) {
-	order.Status = OrderStatusCanceled
+	order.status = OrderStatusCanceled
 }
