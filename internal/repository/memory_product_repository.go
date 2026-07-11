@@ -30,12 +30,12 @@ func (r *MemoryProductRepository) FindByID(id string) (*domain.Product, error) {
 	return product, nil
 }
 
-func (r *MemoryProductRepository) List() []*domain.Product {
+func (r *MemoryProductRepository) List() ([]*domain.Product, error) {
 	products := make([]*domain.Product, 0, len(r.products))
 
 	for _, product := range r.products {
 		products = append(products, product)
 	}
 
-	return products
+	return products, nil
 }
