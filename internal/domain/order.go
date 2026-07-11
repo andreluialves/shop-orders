@@ -31,11 +31,11 @@ type Order struct {
 	status   OrderStatus
 }
 
-func NewOrder(id string, customer string) (*Order, error) {
+func NewOrder(id string, customer string, items []*OrderItem) (*Order, error) {
 	order := Order{
 		ID:       id,
 		Customer: customer,
-		Items:    []*OrderItem{},
+		Items:    items,
 		status:   OrderStatusPending,
 	}
 
@@ -86,10 +86,20 @@ func TotalSum(orders []*Order) float64 {
 	return total
 }
 
-func PayOrder(order *Order) {
-	order.status = OrderStatusPaid
+func (o *Order) Pay() error {
+	if o.status != OrderStatusPending {
+		return ErrChangeStatusInvalid
+	}
+
+	o.status = OrderStatusPaid
+	return nil
 }
 
-func CancelOrder(order *Order) {
-	order.status = OrderStatusCanceled
+func (o *Order) Cancel() error {
+	if o.status != OrderStatusPending {
+		return ErrChangeStatusInvalid
+	}
+
+	o.status = OrderStatusCanceled
+	return nil
 }
