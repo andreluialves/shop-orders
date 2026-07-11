@@ -200,4 +200,83 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	fmt.Println()
+
+	//--------------------------------------------------
+	// Filtro: Pedidos pagos
+	//--------------------------------------------------
+
+	fmt.Println("=== FILTRO: PEDIDOS PAGOS ===")
+
+	paidOrders, err := orderService.FilterOrders(
+		service.PaidOrders(),
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, order := range paidOrders {
+		fmt.Printf(
+			"Pedido: %s | Cliente: %s | Status: %s | Total: %.2f\n",
+			order.ID,
+			order.Customer,
+			order.Status(),
+			order.TotalSum(),
+		)
+	}
+
+	fmt.Println()
+
+	//--------------------------------------------------
+	// Filtro: Pedidos pendentes
+	//--------------------------------------------------
+
+	fmt.Println("=== FILTRO: PEDIDOS PENDENTES ===")
+
+	pendingOrders, err := orderService.FilterOrders(
+		service.PendingOrders(),
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, order := range pendingOrders {
+		fmt.Printf(
+			"Pedido: %s | Cliente: %s | Status: %s | Total: %.2f\n",
+			order.ID,
+			order.Customer,
+			order.Status(),
+			order.TotalSum(),
+		)
+	}
+
+	fmt.Println()
+
+	//--------------------------------------------------
+	// Filtro: Pedidos acima de R$ 500,00
+	//--------------------------------------------------
+
+	fmt.Println("=== FILTRO: PEDIDOS ACIMA DE R$ 500 ===")
+
+	largeOrders, err := orderService.FilterOrders(
+		service.OrdersAboveValue(500),
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, order := range largeOrders {
+		fmt.Printf(
+			"Pedido: %s | Total: %.2f\n",
+			order.ID,
+			order.TotalSum(),
+		)
+	}
 }
