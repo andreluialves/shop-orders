@@ -76,12 +76,10 @@ func (i OrderItem) Validate() error {
 	return nil
 }
 
-func TotalSum(orders []*Order) float64 {
+func (o *Order) TotalSum() float64 {
 	var total float64
-	for _, order := range orders {
-		for _, item := range order.Items {
-			total += item.Price * float64(item.Quantity)
-		}
+	for _, item := range o.Items {
+		total += item.Price * float64(item.Quantity)
 	}
 	return total
 }
@@ -102,4 +100,8 @@ func (o *Order) Cancel() error {
 
 	o.status = OrderStatusCanceled
 	return nil
+}
+
+func (o Order) Status() OrderStatus {
+	return o.status
 }

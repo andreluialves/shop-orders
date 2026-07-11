@@ -30,12 +30,12 @@ func (r *MemoryOrderRepository) FindByID(id string) (*domain.Order, error) {
 	return order, nil
 }
 
-func (r *MemoryOrderRepository) List() []*domain.Order {
+func (r *MemoryOrderRepository) List() ([]*domain.Order, error) {
 	orders := make([]*domain.Order, 0, len(r.orders))
 
 	for _, order := range r.orders {
 		orders = append(orders, order)
 	}
 
-	return orders
+	return orders, nil
 }
