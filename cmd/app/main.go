@@ -254,4 +254,29 @@ func main() {
 			order.TotalSum(),
 		)
 	}
+
+	fmt.Println()
+
+	//--------------------------------------------------
+	// Filtro: Pedidos acima de R$ 500,00
+	//--------------------------------------------------
+
+	fmt.Println("=== FILTRO: PEDIDOS ACIMA DE R$ 500 ===")
+
+	largeOrders, err := orderService.FilterOrders(
+		service.OrdersAboveValue(500),
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, order := range largeOrders {
+		fmt.Printf(
+			"Pedido: %s | Total: %.2f\n",
+			order.ID,
+			order.TotalSum(),
+		)
+	}
 }
