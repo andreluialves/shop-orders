@@ -123,3 +123,23 @@ func (s *OrderService) FindOrderByID(id string) (*domain.Order, error) {
 func (s *OrderService) ListOrders() ([]*domain.Order, error) {
 	return s.orderRepository.List()
 }
+
+type OrderFilter func(*domain.Order) bool
+
+func (s *OrderService) FilterOrders(filter OrderFilter) ([]*domain.Order, error) {
+
+	orders, err := s.orderRepository.List()
+	if err != nil {
+		return nil, err
+	}
+
+	filteredOrders := make([]*domain.Order, 0)
+
+	for _, order := range orders {
+		if filter(order) {
+			filteredOrders = append(filteredOrders, order)
+		}
+	}
+
+	return filteredOrders, nil
+}
