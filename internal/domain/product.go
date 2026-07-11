@@ -43,12 +43,8 @@ func (p Product) Validate() error {
 }
 
 func (p *Product) RestoreQuantity(quantity int) error {
-	if quantity <= 0 {
-		return ErrInvalidQuantity
-	}
-
-	if p.Quantity < quantity {
-		return ErrInsufficientQuantity
+	if err := p.ValidateQuantity(quantity); err != nil {
+		return err
 	}
 
 	p.Quantity += quantity
@@ -56,6 +52,15 @@ func (p *Product) RestoreQuantity(quantity int) error {
 }
 
 func (p *Product) ReduceQuantity(quantity int) error {
+	if err := p.ValidateQuantity(quantity); err != nil {
+		return err
+	}
+
+	p.Quantity -= quantity
+	return nil
+}
+
+func (p Product) ValidateQuantity(quantity int) error {
 	if quantity <= 0 {
 		return ErrInvalidQuantity
 	}
@@ -64,6 +69,5 @@ func (p *Product) ReduceQuantity(quantity int) error {
 		return ErrInsufficientQuantity
 	}
 
-	p.Quantity -= quantity
 	return nil
 }
