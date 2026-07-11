@@ -38,18 +38,35 @@ func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*d
 	var orderItems []*domain.OrderItem
 
 	for _, item := range items {
+
 		product, err := s.productRepository.FindByID(item.ProductID)
 		if err != nil {
 			return nil, err
 		}
 
+		if err := product.ValidateQuantity(item.Quantity); err != nil {
+			return nil, err
+		}
+
 		orderItem := domain.NewOrderItem(product, item.Quantity, product.Price)
+
 		orderItems = append(orderItems, orderItem)
 	}
 
 	order, err := domain.NewOrder(s.generateOrderID(), customer, orderItems)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, item := range order.Items {
+
+		if err := item.Product.ReduceQuantity(item.Quantity); err != nil {
+			return nil, err
+		}
+
+		if err := s.productRepository.Save(item.Product); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.orderRepository.Save(order); err != nil {
@@ -69,7 +86,6 @@ func (s *OrderService) PayOrder(id string) error {
 }
 
 func (s *OrderService) CancelOrder(id string) error {
-
 	order, err := s.FindOrderByID(id)
 
 	if err != nil {
