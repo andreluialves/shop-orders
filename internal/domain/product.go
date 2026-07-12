@@ -42,6 +42,15 @@ func (p Product) Validate() error {
 	return nil
 }
 
+func RestoreProduct(id string, name string, price float64, quantity int) *Product {
+	return &Product{
+		ID:       id,
+		Name:     name,
+		Price:    price,
+		Quantity: quantity,
+	}
+}
+
 func (p *Product) RestoreQuantity(quantity int) error {
 	if err := p.ValidateQuantity(quantity); err != nil {
 		return err

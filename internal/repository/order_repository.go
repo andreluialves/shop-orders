@@ -6,6 +6,7 @@ import (
 
 type OrderRepository interface {
 	Save(order *domain.Order) error
+	Update(order *domain.Order) error
 	FindByID(id string) (*domain.Order, error)
 	List() ([]*domain.Order, error)
 }
