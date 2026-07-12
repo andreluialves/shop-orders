@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:18.4
+    container_name: postgres18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shop_orders}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shop_orders}
+      POSTGRES_DB: ${POSTGRES_DB:-shop_orders}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
