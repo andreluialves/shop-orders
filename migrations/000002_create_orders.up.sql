@@ -1,0 +1,10 @@
+CREATE TABLE orders (
+    id VARCHAR(50) PRIMARY KEY,
+    customer VARCHAR(255) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_orders_status
+        CHECK (status IN ('PENDING', 'PAID', 'CANCELED'))
+);
