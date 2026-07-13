@@ -194,3 +194,12 @@ A Fase 2 encontra-se em andamento e terá como próximos objetivos:
 * Listar clientes
 * Buscar cliente por id;
 * Melhorias na documentação da API
+
+## Acompanhamento do Projeto
+
+O desenvolvimento do projeto é acompanhado através de um **Project Board** do GitHub, onde são organizadas as tarefas, melhorias, correções e novas funcionalidades planejadas.
+
+O board pode ser acessado através do link:
+
+[GitHub Project Board](https://github.com/users/andreluialves/projects/9/views/2)
+
