@@ -76,6 +76,15 @@ func (i OrderItem) Validate() error {
 	return nil
 }
 
+func RestoreOrder(id string, customer string, status OrderStatus) *Order {
+	return &Order{
+		ID:       id,
+		Customer: customer,
+		Items:    []*OrderItem{},
+		status:   status,
+	}
+}
+
 func (o *Order) TotalSum() float64 {
 	var total float64
 	for _, item := range o.Items {
@@ -104,4 +113,12 @@ func (o *Order) Cancel() error {
 
 func (o Order) Status() OrderStatus {
 	return o.status
+}
+
+func (o *Order) SetStatus(status OrderStatus) {
+	o.status = status
+}
+
+func (o *Order) AddItem(item *OrderItem) {
+	o.Items = append(o.Items, item)
 }
