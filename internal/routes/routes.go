@@ -1,19 +1,20 @@
 package routes
 
-import "net/http"
+import (
+	"github.com/go-chi/chi/v5"
 
-func NewRouter() *http.ServeMux {
+	"github.com/andreluialves/shop-orders/internal/controllers"
+)
 
-	mux := http.NewServeMux()
+func NewRouter(
+	productController *controllers.ProductController,
+	orderController *controllers.OrderController,
+) *chi.Mux {
 
-	RegisterRoutes(mux)
+	r := chi.NewRouter()
 
-	return mux
-}
+	ProductRoutes(r, productController)
+	OrderRoutes(r, orderController)
 
-func RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("API está funcionando normalmente!"))
-	})
+	return r
 }

@@ -7,9 +7,8 @@ type Product struct {
 	Quantity int
 }
 
-func NewProduct(ID string, Name string, Price float64, Quantity int) (*Product, error) {
+func NewProduct(Name string, Price float64, Quantity int) (*Product, error) {
 	product := Product{
-		ID:       ID,
 		Name:     Name,
 		Price:    Price,
 		Quantity: Quantity,
@@ -23,9 +22,9 @@ func NewProduct(ID string, Name string, Price float64, Quantity int) (*Product, 
 }
 
 func (p Product) Validate() error {
-	if p.ID == "" {
-		return ErrProductIDInvalid
-	}
+	// if p.ID == "" {
+	// 	return ErrProductIDInvalid
+	// }
 
 	if p.Name == "" {
 		return ErrProductNameInvalid

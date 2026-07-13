@@ -1,12 +1,20 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/andreluialves/shop-orders/internal/repository"
 )
 
 type ProductService struct {
 	productRepository repository.ProductRepository
+	nextProductID     int
+}
+
+func (s *ProductService) generateProductID() string {
+	s.nextProductID++
+	return fmt.Sprintf("PROD-%03d", s.nextProductID)
 }
 
 func NewProductService(
@@ -18,6 +26,9 @@ func NewProductService(
 }
 
 func (s *ProductService) CreateProduct(product *domain.Product) error {
+
+	product.ID = s.generateProductID()
+
 	return s.productRepository.Save(product)
 }
 
