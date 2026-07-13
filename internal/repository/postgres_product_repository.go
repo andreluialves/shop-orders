@@ -64,33 +64,18 @@ func (r *PostgresProductRepository) FindByID(id string) (*domain.Product, error)
 
 	row := r.db.QueryRow(ctx, query, id)
 
-	var (
-		productID string
-		name      string
-		price     float64
-		quantity  int
+	product := &domain.Product{}
+
+	err := row.Scan(
+		&product.ID,
+		&product.Name,
+		&product.Price,
+		&product.Quantity,
 	)
 
-	if err := row.Scan(
-		&productID,
-		&name,
-		&price,
-		&quantity,
-	); err != nil {
-
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domain.ErrProductNotFound
-		}
-
-		return nil, err
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrProductNotFound
 	}
-
-	product := domain.RestoreProduct(
-		productID,
-		name,
-		price,
-		quantity,
-	)
 
 	return product, nil
 }

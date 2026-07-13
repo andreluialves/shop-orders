@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/andreluialves/shop-orders/internal/repository"
 
 	"github.com/andreluialves/shop-orders/config"
+	"github.com/andreluialves/shop-orders/internal/controllers"
 	"github.com/andreluialves/shop-orders/internal/database"
 	"github.com/andreluialves/shop-orders/internal/routes"
 	"github.com/andreluialves/shop-orders/internal/service"
@@ -41,50 +41,31 @@ func main() {
 		orderRepository,
 	)
 
-	productService := service.NewProductService(
-		productRepository,
-	)
+	productService := service.NewProductService(productRepository)
 
-	// Teste criação de um produto no banco de dados
-	product, err := domain.NewProduct(
-		"P001",
-		"Notebook",
-		3500.00,
-		10,
-	)
+	// // Teste de criação de um pedido no banco de dados
+	// order, err := orderService.CreateOrder(
+	// 	"João Silva",
+	// 	[]service.CreateOrderItem{
+	// 		{
+	// 			ProductID: "P001",
+	// 			Quantity:  2,
+	// 		},
+	// 	},
+	// )
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	if err := productRepository.Save(product); err != nil {
-		log.Fatal(err)
-	}
+	// log.Printf("Pedido criado: %s", order.ID)
 
-	log.Printf("Produto criado: %s", product.ID)
-
-	// Teste de criação de um pedido no banco de dados
-	order, err := orderService.CreateOrder(
-		"João Silva",
-		[]service.CreateOrderItem{
-			{
-				ProductID: "P001",
-				Quantity:  2,
-			},
-		},
-	)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Pedido criado: %s", order.ID)
+	// Controllers
+	productController := controllers.NewProductController(productService)
+	orderController := controllers.NewOrderController(orderService)
 
 	// Cria o roteador
-	router := routes.NewRouter()
-
-	// Temporariamente ainda não existem controllers.
-	// Quando eles forem implementados, serão registrados aqui.
+	router := routes.NewRouter(productController, orderController)
 
 	log.Println("Server running on :8080")
 
