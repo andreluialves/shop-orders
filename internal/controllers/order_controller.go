@@ -7,7 +7,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/andreluialves/shop-orders/internal/dto"
+	"github.com/andreluialves/shop-orders/internal/pagination"
 	"github.com/andreluialves/shop-orders/internal/service"
 )
 
@@ -65,16 +67,29 @@ func (oc *OrderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (oc *OrderController) FindAllOrders(w http.ResponseWriter, r *http.Request) {
+	p := pagination.ParseFromRequest(r)
 
-	orders, err := oc.orderService.ListOrders()
+	orders, total, err := oc.orderService.ListOrders(p.Limit, p.Offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	response := struct {
+		Data   []*domain.Order `json:"data"`
+		Total  int             `json:"total"`
+		Limit  int             `json:"limit"`
+		Offset int             `json:"offset"`
+	}{
+		Data:   orders,
+		Total:  total,
+		Limit:  p.Limit,
+		Offset: p.Offset,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(orders)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (oc *OrderController) FindOrderByID(w http.ResponseWriter, r *http.Request) {

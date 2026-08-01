@@ -199,19 +199,27 @@ func (r *PostgresOrderRepository) FindByID(id string) (*domain.Order, error) {
 	return order, nil
 }
 
-func (r *PostgresOrderRepository) List() ([]*domain.Order, error) {
+func (r *PostgresOrderRepository) List(limit, offset int) ([]*domain.Order, int, error) {
 
 	ctx := context.Background()
+
+	var total int
+	countQuery := `SELECT COUNT(*) FROM orders`
+
+	if err := r.db.QueryRow(ctx, countQuery).Scan(&total); err != nil {
+		return nil, 0, err
+	}
 
 	query := `
 		SELECT id
 		FROM orders
 		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
 	`
-	rows, err := r.db.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query, limit, offset)
 
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	defer rows.Close()
@@ -223,21 +231,21 @@ func (r *PostgresOrderRepository) List() ([]*domain.Order, error) {
 		var id string
 
 		if err := rows.Scan(&id); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		order, err := r.FindByID(id)
 
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		orders = append(orders, order)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return orders, nil
+	return orders, total, nil
 }

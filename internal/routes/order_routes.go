@@ -10,4 +10,6 @@ func OrderRoutes(r chi.Router, orderController *controllers.OrderController) {
 	r.Post("/orders", orderController.CreateOrder)
 	r.Get("/orders", orderController.FindAllOrders)
 	r.Get("/orders/{id}", orderController.FindOrderByID)
+	r.Get("/orders/{id}pay", orderController.FindOrderByID)
+	r.Get("/orders/{id}cancel", orderController.FindOrderByID)
 }

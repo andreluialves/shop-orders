@@ -120,17 +120,17 @@ func (s *OrderService) FindOrderByID(id string) (*domain.Order, error) {
 	return s.orderRepository.FindByID(id)
 }
 
-func (s *OrderService) ListOrders() ([]*domain.Order, error) {
-	return s.orderRepository.List()
+func (s *OrderService) ListOrders(limit, offset int) ([]*domain.Order, int, error) {
+	return s.orderRepository.List(limit, offset)
 }
 
 type OrderFilter func(*domain.Order) bool
 
-func (s *OrderService) FilterOrders(filter OrderFilter) ([]*domain.Order, error) {
+func (s *OrderService) FilterOrders(filter OrderFilter, limit, offset int) ([]*domain.Order, int, error) {
 
-	orders, err := s.orderRepository.List()
+	orders, total, err := s.orderRepository.List(limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	filteredOrders := make([]*domain.Order, 0)
@@ -141,5 +141,5 @@ func (s *OrderService) FilterOrders(filter OrderFilter) ([]*domain.Order, error)
 		}
 	}
 
-	return filteredOrders, nil
+	return filteredOrders, total, nil
 }
