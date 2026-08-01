@@ -30,8 +30,8 @@ func (s *OrderService) generateOrderID() string {
 }
 
 type CreateOrderItem struct {
-	ProductID string
-	Quantity  int
+	ID       string
+	Quantity int
 }
 
 func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*domain.Order, error) {
@@ -39,7 +39,7 @@ func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*d
 
 	for _, item := range items {
 
-		product, err := s.productRepository.FindByID(item.ProductID)
+		product, err := s.productRepository.FindByID(item.ID)
 		if err != nil {
 			return nil, err
 		}

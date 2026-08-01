@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -32,13 +33,18 @@ func (oc *OrderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Request: %+v\n", request)
+
+	for i, item := range request.Items {
+		log.Printf("Item %d: ID=%s Quantity=%d", i, item.ID, item.Quantity)
+	}
 
 	items := make([]service.CreateOrderItem, 0)
 
 	for _, item := range request.Items {
 		items = append(items, service.CreateOrderItem{
-			ProductID: item.ProductID,
-			Quantity:  item.Quantity,
+			ID:       item.ID,
+			Quantity: item.Quantity,
 		})
 	}
 

@@ -1,24 +1,24 @@
 package dto
 
 type CreateOrderItem struct {
-	ProductID string `json:"product_id"`
-	Quantity  int    `json:"quantity"`
+	ID       string `json:"id"`
+	Quantity int    `json:"quantity"`
 }
 
 type OrderItemRequest struct {
-	ProductID string `json:"product_id"`
-	Quantity  int    `json:"quantity"`
+	ID       string `json:"id"`
+	Quantity int    `json:"quantity"`
 }
 
 type OrderItemResponse struct {
-	ProductID string  `json:"product_id"`
-	Quantity  int     `json:"quantity"`
-	Price     float64 `json:"price"`
-	Subtotal  float64 `json:"subtotal"`
+	ID       string  `json:"id"`
+	Quantity int     `json:"quantity"`
+	Price    float64 `json:"price"`
+	Subtotal float64 `json:"subtotal"`
 }
 
 type CreateOrderRequest struct {
-	Customer string            `json:"product"`
+	Customer string            `json:"customer"`
 	Items    []CreateOrderItem `json:"items"`
 	Status   string            `json:"status"`
 }
