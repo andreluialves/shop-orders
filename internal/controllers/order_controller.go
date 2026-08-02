@@ -55,14 +55,16 @@ func (oc *OrderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, err)
 		return
 	}
+
+	response := dto.NewOrderResponse(order)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	json.NewEncoder(w).Encode(order)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (oc *OrderController) FindAllOrders(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +72,7 @@ func (oc *OrderController) FindAllOrders(w http.ResponseWriter, r *http.Request)
 
 	orders, total, err := oc.orderService.ListOrders(p.Limit, p.Offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err)
 		return
 	}
 
@@ -101,7 +103,7 @@ func (oc *OrderController) FindOrderByID(w http.ResponseWriter, r *http.Request)
 
 	order, err := oc.orderService.FindOrderByID(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		handleError(w, err)
 		return
 	}
 
@@ -121,7 +123,7 @@ func (oc *OrderController) PayOrder(w http.ResponseWriter, r *http.Request) {
 
 	order, err := oc.orderService.PayOrder(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err)
 		return
 	}
 
@@ -140,7 +142,7 @@ func (oc *OrderController) CancelOrder(w http.ResponseWriter, r *http.Request) {
 
 	order, err := oc.orderService.CancelOrder(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err)
 		return
 	}
 
