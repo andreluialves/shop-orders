@@ -97,15 +97,15 @@ func (s *OrderService) PayOrder(id string) (*domain.Order, error) {
 	return order, nil
 }
 
-func (s *OrderService) CancelOrder(id string) error {
+func (s *OrderService) CancelOrder(id string) (*domain.Order, error) {
 	order, err := s.FindOrderByID(id)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := order.Cancel(); err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, item := range order.Items {
@@ -113,19 +113,23 @@ func (s *OrderService) CancelOrder(id string) error {
 		product, err := s.productRepository.FindByID(item.Product.ID)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := product.RestoreQuantity(item.Quantity); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := s.productRepository.Save(product); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return s.orderRepository.Save(order)
+	if err := s.orderRepository.Update(order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func (s *OrderService) FindOrderByID(id string) (*domain.Order, error) {

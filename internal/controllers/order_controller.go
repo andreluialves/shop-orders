@@ -129,3 +129,22 @@ func (oc *OrderController) PayOrder(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func (oc *OrderController) CancelOrder(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		http.Error(w, "O ID do pedido é obrigatório.", http.StatusBadRequest)
+		return
+	}
+
+	order, err := oc.orderService.CancelOrder(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := dto.NewOrderResponse(order)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
