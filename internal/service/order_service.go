@@ -76,13 +76,25 @@ func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*d
 	return order, nil
 }
 
-func (s *OrderService) PayOrder(id string) error {
-	order, err := s.FindOrderByID(id)
+// func (s *OrderService) PayOrder(id string) (*domain.Order, error) {
+// 	return s.orderRepository.Pay(id)
+// }
+
+func (s *OrderService) PayOrder(id string) (*domain.Order, error) {
+	order, err := s.orderRepository.FindByID(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	order.Pay()
-	return s.orderRepository.Save(order)
+
+	if err := order.Pay(); err != nil {
+		return nil, err
+	}
+
+	if err := s.orderRepository.Update(order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func (s *OrderService) CancelOrder(id string) error {

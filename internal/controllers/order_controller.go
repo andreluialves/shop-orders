@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/andreluialves/shop-orders/internal/dto"
 	"github.com/andreluialves/shop-orders/internal/pagination"
 	"github.com/andreluialves/shop-orders/internal/service"
@@ -75,20 +74,24 @@ func (oc *OrderController) FindAllOrders(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	data := make([]dto.OrderResponse, len(orders))
+	for i, o := range orders {
+		data[i] = dto.NewOrderResponse(o)
+	}
+
 	response := struct {
-		Data   []*domain.Order `json:"data"`
-		Total  int             `json:"total"`
-		Limit  int             `json:"limit"`
-		Offset int             `json:"offset"`
+		Data   []dto.OrderResponse `json:"data"`
+		Total  int                 `json:"total"`
+		Limit  int                 `json:"limit"`
+		Offset int                 `json:"offset"`
 	}{
-		Data:   orders,
+		Data:   data,
 		Total:  total,
 		Limit:  p.Limit,
 		Offset: p.Offset,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -102,7 +105,27 @@ func (oc *OrderController) FindOrderByID(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	response := dto.NewOrderResponse(order)
 
-	json.NewEncoder(w).Encode(order)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (oc *OrderController) PayOrder(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		http.Error(w, "O ID do pedido é obrigatório.", http.StatusBadRequest)
+		return
+	}
+
+	order, err := oc.orderService.PayOrder(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := dto.NewOrderResponse(order)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
