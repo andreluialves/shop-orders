@@ -30,8 +30,8 @@ func (s *OrderService) generateOrderID() string {
 }
 
 type CreateOrderItem struct {
-	ProductID string
-	Quantity  int
+	ID       string
+	Quantity int
 }
 
 func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*domain.Order, error) {
@@ -39,7 +39,7 @@ func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*d
 
 	for _, item := range items {
 
-		product, err := s.productRepository.FindByID(item.ProductID)
+		product, err := s.productRepository.FindByID(item.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -76,24 +76,36 @@ func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*d
 	return order, nil
 }
 
-func (s *OrderService) PayOrder(id string) error {
-	order, err := s.FindOrderByID(id)
+// func (s *OrderService) PayOrder(id string) (*domain.Order, error) {
+// 	return s.orderRepository.Pay(id)
+// }
+
+func (s *OrderService) PayOrder(id string) (*domain.Order, error) {
+	order, err := s.orderRepository.FindByID(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	order.Pay()
-	return s.orderRepository.Save(order)
+
+	if err := order.Pay(); err != nil {
+		return nil, err
+	}
+
+	if err := s.orderRepository.Update(order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
-func (s *OrderService) CancelOrder(id string) error {
+func (s *OrderService) CancelOrder(id string) (*domain.Order, error) {
 	order, err := s.FindOrderByID(id)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := order.Cancel(); err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, item := range order.Items {
@@ -101,36 +113,40 @@ func (s *OrderService) CancelOrder(id string) error {
 		product, err := s.productRepository.FindByID(item.Product.ID)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := product.RestoreQuantity(item.Quantity); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := s.productRepository.Save(product); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return s.orderRepository.Save(order)
+	if err := s.orderRepository.Update(order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func (s *OrderService) FindOrderByID(id string) (*domain.Order, error) {
 	return s.orderRepository.FindByID(id)
 }
 
-func (s *OrderService) ListOrders() ([]*domain.Order, error) {
-	return s.orderRepository.List()
+func (s *OrderService) ListOrders(limit, offset int) ([]*domain.Order, int, error) {
+	return s.orderRepository.List(limit, offset)
 }
 
 type OrderFilter func(*domain.Order) bool
 
-func (s *OrderService) FilterOrders(filter OrderFilter) ([]*domain.Order, error) {
+func (s *OrderService) FilterOrders(filter OrderFilter, limit, offset int) ([]*domain.Order, int, error) {
 
-	orders, err := s.orderRepository.List()
+	orders, total, err := s.orderRepository.List(limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	filteredOrders := make([]*domain.Order, 0)
@@ -141,5 +157,5 @@ func (s *OrderService) FilterOrders(filter OrderFilter) ([]*domain.Order, error)
 		}
 	}
 
-	return filteredOrders, nil
+	return filteredOrders, total, nil
 }

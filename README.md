@@ -38,18 +38,21 @@ Endpoints implementados atualmente:
 ### Products
 
 ```
-GET /products
-GET /products/{id}
+GET  /products
+GET  /products/{id}
 POST /products
 ```
 
 ### Orders
 
 ```
-GET /orders
-GET /orders/{id}
+GET  /orders
+GET  /pedidos?limit=10&offset=0
+GET  /orders/{id}
+POST /orders
+POST /orders/{id}/pay
+POST /orders/{id}/cancel
 ```
-
 *(Novos endpoints serão adicionados conforme a evolução da Fase 2.)*
 
 ## Estrutura do Projeto
@@ -57,46 +60,65 @@ GET /orders/{id}
 ```text
 .
 ├── cmd
-│   └── app
+│   ├── app
+│   │   └── main.go
+│   └── seed
 │       └── main.go
-│
+├── config
+│   └── config.go
 ├── internal
+│   ├── controllers
+│   │   ├── errors.go
+│   │   ├── errors_test.go
+│   │   ├── mocks_test.go
+│   │   ├── order_controller.go
+│   │   ├── order_controller_test.go
+│   │   ├── product_controller.go
+│   │   └── product_controller_test.go
 │   ├── database
 │   │   └── postgres.go
-│   │
 │   ├── domain
+│   │   ├── errors.go
 │   │   ├── order.go
+│   │   ├── order_test.go
 │   │   ├── product.go
-│   │   └── errors.go
-│   │
+│   │   └── product_test.go
 │   ├── dto
 │   │   ├── order_dto.go
 │   │   └── product_dto.go
-│   │
+│   ├── pagination
+│   │   └── pagination.go
 │   ├── repository
-│   │   ├── product_repository.go
 │   │   ├── order_repository.go
-│   │   ├── memory_product_repository.go
-│   │   └── memory_order_repository.go
-│   │
+│   │   ├── postgres_order_repository.go
+│   │   ├── postgres_product_repository.go
+│   │   └── product_repository.go
 │   ├── routes
-│   │   ├── routes.go
 │   │   ├── order_routes.go
-│   │   └── product_routes.go
-│   │
+│   │   ├── product_routes.go
+│   │   └── routes.go
 │   └── service
+│       ├── mocks_test.go
+│       ├── order_filters.go
 │       ├── order_service.go
-│       └── order_filters.go
-│
+│       ├── order_service_test.go
+│       ├── product_service.go
+│       └── product_service_test.go
 ├── migrations
 │   ├── 000001_create_products.down.sql
 │   ├── 000001_create_products.up.sql
 │   ├── 000002_create_orders.down.sql
-│   └── 000002_create_orders.up.sql
-│
+│   ├── 000002_create_orders.up.sql
+│   ├── 000003_create_order_items.down.sql
+│   └── 000003_create_order_items.up.sql
+├── seeds
+│   ├── 100001_seed_products.down.sql
+│   └── 100001_seed_products.up.sql
+├── coverage.out
 ├── docker-compose.yml
 ├── go.mod
-└── go.sum
+├── go.sum
+└── README.md
 ```
 
 ## Como clonar o projeto
@@ -178,6 +200,10 @@ Durante a evolução do projeto são demonstrados:
 * Consulta de pedidos por ID
 * Listagem de produtos
 * Listagem de pedidos
+* Atualização de estoque
+* Pagamento de pedidos
+* Cancelamento com restauração de estoque
+* Listagem paginada de pedidos
 * Persistência dos dados em PostgreSQL
 * Integração da aplicação com banco de dados utilizando Docker
 
@@ -186,12 +212,9 @@ Durante a evolução do projeto são demonstrados:
 A Fase 2 encontra-se em andamento e terá como próximos objetivos:
 
 * Criação de pedidos com transação
-* Atualização de estoque
-* Pagamento de pedidos
-* Cancelamento com restauração de estoque
-* Listagem paginada de pedidos
 * Cadastrar clientes
 * Listar clientes
+* Criar pedido para um cliente
 * Buscar cliente por id;
 * Melhorias na documentação da API
 
