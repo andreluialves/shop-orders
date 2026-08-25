@@ -50,6 +50,7 @@ func (oc *OrderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	order, err := oc.orderService.CreateOrder(
+		r.Context(),
 		request.Customer,
 		items,
 	)
@@ -140,7 +141,7 @@ func (oc *OrderController) CancelOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := oc.orderService.CancelOrder(id)
+	order, err := oc.orderService.CancelOrder(r.Context(), id)
 	if err != nil {
 		handleError(w, err)
 		return

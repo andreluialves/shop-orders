@@ -1,11 +1,11 @@
 package service_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/andreluialves/shop-orders/internal/domain"
-	"github.com/andreluialves/shop-orders/internal/service"
 )
 
 func TestOrderService_PayOrder(t *testing.T) {
@@ -24,7 +24,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		result, err := s.PayOrder("PED-001")
 
@@ -48,7 +48,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		_, err := s.PayOrder("PED-999")
 
@@ -72,7 +72,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		_, err := s.PayOrder("PED-001")
 
@@ -97,7 +97,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		_, err := s.PayOrder("PED-001")
 
@@ -138,9 +138,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		result, err := s.CancelOrder("PED-001")
+		result, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if err != nil {
 			t.Fatalf("não esperava erro, recebeu %v", err)
@@ -178,9 +178,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		_, err := s.CancelOrder("PED-001")
+		_, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if !errors.Is(err, domain.ErrChangeStatusInvalid) {
 			t.Errorf("esperava ErrChangeStatusInvalid, recebeu %v", err)
@@ -207,9 +207,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		_, err := s.CancelOrder("PED-001")
+		_, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if err == nil {
 			t.Error("esperava erro quando produto não é encontrado, recebeu nil")
@@ -241,9 +241,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		_, err := s.CancelOrder("PED-001")
+		_, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if err == nil {
 			t.Error("esperava erro propagado do Save do produto")
