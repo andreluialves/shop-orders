@@ -6,14 +6,13 @@ import (
 
 	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PostgresProductRepository struct {
-	db *pgxpool.Pool
+	db DBTX
 }
 
-func NewPostgresProductRepository(db *pgxpool.Pool) *PostgresProductRepository {
+func NewPostgresProductRepository(db DBTX) *PostgresProductRepository {
 	return &PostgresProductRepository{
 		db: db,
 	}
