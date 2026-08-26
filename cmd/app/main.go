@@ -37,25 +37,29 @@ func main() {
 	// Repositories
 	productRepository := repository.NewPostgresProductRepository(db)
 	orderRepository := repository.NewPostgresOrderRepository(db)
+	customerRepository := repository.NewPostgresCustomerRepository(db)
 
 	// Decorators com logging
 	loggedOrderRepo := repository.NewLoggingOrderRepository(orderRepository, appLogger)
 	loggedProductRepo := repository.NewLoggingProductRepository(productRepository, appLogger)
+	loggedCustomerRepo := repository.NewLoggingCustomerRepository(customerRepository, appLogger)
 
 	unitOfWork := repository.NewPostgresUnitOfWork(db)
-	orderIDGenerator := repository.NewPostgresOrderIDGenerator(db) // novo
+	orderIDGenerator := repository.NewPostgresOrderIDGenerator(db)
+	customerIDGenerator := repository.NewPostgresCustomerIDGenerator(db)
 
 	// Services
 	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork, orderIDGenerator)
-
 	productService := service.NewProductService(loggedProductRepo)
+	customerService := service.NewCustomerService(loggedCustomerRepo, customerIDGenerator)
 
 	// Controllers
 	productController := controllers.NewProductController(productService)
 	orderController := controllers.NewOrderController(orderService)
+	customerController := controllers.NewCustomerController(customerService)
 
 	// Cria o roteador
-	router := routes.NewRouter(productController, orderController)
+	router := routes.NewRouter(productController, orderController, customerController)
 
 	log.Println("Server running on :8080")
 

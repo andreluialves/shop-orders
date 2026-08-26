@@ -9,12 +9,13 @@ import (
 func NewRouter(
 	productController *controllers.ProductController,
 	orderController *controllers.OrderController,
-) *chi.Mux {
+	customerController *controllers.CustomerController) *chi.Mux {
 
 	r := chi.NewRouter()
 
 	ProductRoutes(r, productController)
 	OrderRoutes(r, orderController)
+	CustomerRoutes(r, customerController)
 
 	return r
 }

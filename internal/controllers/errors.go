@@ -38,7 +38,10 @@ func handleError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrProductNameInvalid),
 		errors.Is(err, domain.ErrProductPriceInvalid),
 		errors.Is(err, domain.ErrEmptyOrder):
+		http.Error(w, err.Error(), http.StatusBadRequest)
 
+	case errors.Is(err, domain.ErrCustomerEmailRequired),
+		errors.Is(err, domain.ErrCustomerEmailInvalid):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
 	default:

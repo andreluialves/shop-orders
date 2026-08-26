@@ -38,4 +38,12 @@ var ErrCustomerNameTooLong = errors.New("nome do cliente é muito longo")
 
 var ErrProductNameRequired = errors.New("nome do produto é obrigatório")
 
+var ErrCustomerEmailRequired = errors.New("email do cliente é obrigatório")
+
+var ErrCustomerEmailInvalid = errors.New("email do cliente é inválido")
+
+var ErrCustomerAddressRequired = errors.New("endereço do cliente é obrigatório")
+
+var ErrCustomerNotFound = errors.New("cliente não encontrado")
+
 var ErrInvalidPrice = errors.New("preço inválido")
