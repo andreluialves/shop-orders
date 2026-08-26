@@ -43,9 +43,10 @@ func main() {
 	loggedProductRepo := repository.NewLoggingProductRepository(productRepository, appLogger)
 
 	unitOfWork := repository.NewPostgresUnitOfWork(db)
+	orderIDGenerator := repository.NewPostgresOrderIDGenerator(db) // novo
 
 	// Services
-	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork)
+	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork, orderIDGenerator)
 
 	productService := service.NewProductService(loggedProductRepo)
 

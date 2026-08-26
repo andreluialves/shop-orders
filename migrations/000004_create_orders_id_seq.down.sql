@@ -1,0 +1,1 @@
+DROP SEQUENCE IF EXISTS orders_id_seq;

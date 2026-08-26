@@ -65,5 +65,18 @@ func newTestOrderService(productRepo *mockProductRepository, orderRepo *mockOrde
 		},
 	}
 
-	return service.NewOrderService(productRepo, orderRepo, uow)
+	idGenerator := &mockOrderIDGenerator{}
+
+	return service.NewOrderService(productRepo, orderRepo, uow, idGenerator)
+}
+
+type mockOrderIDGenerator struct {
+	NextOrderIDFunc func(ctx context.Context) (string, error)
+}
+
+func (m *mockOrderIDGenerator) NextOrderID(ctx context.Context) (string, error) {
+	if m.NextOrderIDFunc != nil {
+		return m.NextOrderIDFunc(ctx)
+	}
+	return "PED-TEST", nil
 }

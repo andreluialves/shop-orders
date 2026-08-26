@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/andreluialves/shop-orders/internal/repository"
@@ -12,75 +11,27 @@ type OrderService struct {
 	productRepository repository.ProductRepository
 	orderRepository   repository.OrderRepository
 	unitOfWork        repository.UnitOfWork
-	nextOrderID       int
+	idGenerator       repository.OrderIDGenerator
 }
 
 func NewOrderService(
 	productRepository repository.ProductRepository,
 	orderRepository repository.OrderRepository,
 	unitOfWork repository.UnitOfWork,
+	idGenerator repository.OrderIDGenerator,
 ) *OrderService {
 	return &OrderService{
 		productRepository: productRepository,
 		orderRepository:   orderRepository,
 		unitOfWork:        unitOfWork,
-		nextOrderID:       0,
+		idGenerator:       idGenerator,
 	}
-}
-
-func (s *OrderService) generateOrderID() string {
-	s.nextOrderID++
-	return fmt.Sprintf("PED-%03d", s.nextOrderID)
 }
 
 type CreateOrderItem struct {
 	ID       string
 	Quantity int
 }
-
-// func (s *OrderService) CreateOrder(customer string, items []CreateOrderItem) (*domain.Order, error) {
-// 	var orderItems []*domain.OrderItem
-
-// 	err := s.unitOfWork.Execute(ctx, func(repos repository.Repositories) error {
-// 		var orderItems []*domain.OrderItem
-
-// 	for _, item := range items {
-// 		product, err := s.productRepository.FindByID(item.ID)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		if err := product.ValidateQuantity(item.Quantity); err != nil {
-// 			return nil, err
-// 		}
-
-// 		orderItem := domain.NewOrderItem(product, item.Quantity, product.Price)
-
-// 		orderItems = append(orderItems, orderItem)
-// 	}
-
-// 	order, err := domain.NewOrder(s.generateOrderID(), customer, orderItems)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	for _, item := range order.Items {
-
-// 		if err := item.Product.ReduceQuantity(item.Quantity); err != nil {
-// 			return nil, err
-// 		}
-
-// 		if err := s.productRepository.Save(item.Product); err != nil {
-// 			return nil, err
-// 		}
-// 	}
-
-// 	if err := s.orderRepository.Save(order); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return order, nil
-// }
 
 func (s *OrderService) CreateOrder(ctx context.Context, customer string, items []CreateOrderItem) (*domain.Order, error) {
 	var order *domain.Order
@@ -101,7 +52,12 @@ func (s *OrderService) CreateOrder(ctx context.Context, customer string, items [
 			orderItems = append(orderItems, domain.NewOrderItem(product, item.Quantity, product.Price))
 		}
 
-		newOrder, err := domain.NewOrder(s.generateOrderID(), customer, orderItems)
+		orderID, err := s.idGenerator.NextOrderID(ctx)
+		if err != nil {
+			return err
+		}
+
+		newOrder, err := domain.NewOrder(orderID, customer, orderItems)
 		if err != nil {
 			return err
 		}
