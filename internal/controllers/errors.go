@@ -10,7 +10,8 @@ import (
 
 func handleError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, domain.ErrProductNotFound):
+	case errors.Is(err, domain.ErrProductNotFound),
+		errors.Is(err, domain.ErrCustomerNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 
 	case errors.Is(err, domain.ErrOrderNotFound):
@@ -41,6 +42,8 @@ func handleError(w http.ResponseWriter, err error) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
 	case errors.Is(err, domain.ErrCustomerEmailRequired),
+		errors.Is(err, domain.ErrCustomerAddressRequired),
+		errors.Is(err, domain.ErrCustomerAddressRequired),
 		errors.Is(err, domain.ErrCustomerEmailInvalid):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 

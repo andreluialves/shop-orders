@@ -20,7 +20,13 @@ func NewCustomerService(customerRepository repository.CustomerRepository, idGene
 }
 
 func (s *CustomerService) CreateCustomer(ctx context.Context, customer *domain.Customer) error {
-	customer.ID, _ = s.idGenerator.NextCustomerID(ctx)
+	id, err := s.idGenerator.NextCustomerID(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	customer.ID = id
 	return s.customerRepository.Save(customer)
 }
 

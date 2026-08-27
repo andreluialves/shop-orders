@@ -86,3 +86,32 @@ func (m *mockOrderIDGenerator) NextOrderID(ctx context.Context) (string, error) 
 	}
 	return "PED-TEST", nil // valor padrão razoável, se o teste não se importar com o ID exato
 }
+
+type mockCustomerRepository struct {
+	FindByIDFunc func(id string) (*domain.Customer, error)
+	SaveFunc     func(customer *domain.Customer) error
+	ListFunc     func() ([]*domain.Customer, error)
+}
+
+func (m *mockCustomerRepository) FindByID(id string) (*domain.Customer, error) {
+	return m.FindByIDFunc(id)
+}
+
+func (m *mockCustomerRepository) Save(customer *domain.Customer) error {
+	return m.SaveFunc(customer)
+}
+
+func (m *mockCustomerRepository) List() ([]*domain.Customer, error) {
+	return m.ListFunc()
+}
+
+type mockCustomerIDGenerator struct {
+	NextCustomerIDFunc func(ctx context.Context) (string, error)
+}
+
+func (m *mockCustomerIDGenerator) NextCustomerID(ctx context.Context) (string, error) {
+	if m.NextCustomerIDFunc != nil {
+		return m.NextCustomerIDFunc(ctx)
+	}
+	return "CUST-TEST", nil
+}
