@@ -8,8 +8,9 @@ import (
 
 // Repositories agrupa os repositories vinculados a uma mesma transação.
 type Repositories struct {
-	Order   OrderRepository
-	Product ProductRepository
+	Order    OrderRepository
+	Product  ProductRepository
+	Customer CustomerRepository
 }
 
 // UnitOfWork executa fn dentro de uma transação: se fn retornar erro, tudo é
@@ -32,13 +33,12 @@ func (u *PostgresUnitOfWork) Execute(ctx context.Context, fn func(repos Reposito
 		return err
 	}
 
-	// Rollback é seguro de chamar mesmo depois de um Commit bem-sucedido —
-	// nesse caso, o pgx simplesmente ignora (é um no-op).
 	defer tx.Rollback(ctx)
 
 	repos := Repositories{
-		Order:   NewPostgresOrderRepository(tx),
-		Product: NewPostgresProductRepository(tx),
+		Order:    NewPostgresOrderRepository(tx),
+		Product:  NewPostgresProductRepository(tx),
+		Customer: NewPostgresCustomerRepository(tx), // novo
 	}
 
 	if err := fn(repos); err != nil {

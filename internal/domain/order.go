@@ -25,18 +25,18 @@ func NewOrderItem(product *Product, quantity int, price float64) *OrderItem {
 }
 
 type Order struct {
-	ID       string
-	Customer string
-	Items    []*OrderItem
-	status   OrderStatus
+	ID         string
+	CustomerID string
+	Items      []*OrderItem
+	status     OrderStatus
 }
 
-func NewOrder(id string, customer string, items []*OrderItem) (*Order, error) {
+func NewOrder(id string, customerID string, items []*OrderItem) (*Order, error) {
 	order := Order{
-		ID:       id,
-		Customer: customer,
-		Items:    items,
-		status:   OrderStatusPending,
+		ID:         id,
+		CustomerID: customerID,
+		Items:      items,
+		status:     OrderStatusPending,
 	}
 
 	if err := order.Validate(); err != nil {
@@ -47,7 +47,7 @@ func NewOrder(id string, customer string, items []*OrderItem) (*Order, error) {
 }
 
 func (o Order) Validate() error {
-	if strings.TrimSpace(o.Customer) == "" {
+	if strings.TrimSpace(o.CustomerID) == "" {
 		return ErrInvalidCustomer
 	}
 
@@ -76,12 +76,12 @@ func (i OrderItem) Validate() error {
 	return nil
 }
 
-func RestoreOrder(id string, customer string, status OrderStatus) *Order {
+func RestoreOrder(id string, customerID string, status OrderStatus) *Order {
 	return &Order{
-		ID:       id,
-		Customer: customer,
-		Items:    []*OrderItem{},
-		status:   status,
+		ID:         id,
+		CustomerID: customerID,
+		Items:      []*OrderItem{},
+		status:     status,
 	}
 }
 

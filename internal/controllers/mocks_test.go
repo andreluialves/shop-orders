@@ -58,10 +58,27 @@ func (m *mockUnitOfWork) Execute(ctx context.Context, fn func(repos repository.R
 }
 
 func newTestOrderService(productRepo *mockProductRepository, orderRepo *mockOrderRepository) *service.OrderService {
+	customerRepo := &mockCustomerRepository{
+		FindByIDFunc: func(id string) (*domain.Customer, error) {
+			return &domain.Customer{ID: id, Name: "Cliente Teste"}, nil
+		},
+	}
+
+	return newTestOrderServiceWithCustomerRepo(productRepo, orderRepo, customerRepo)
+}
+
+// newTestOrderServiceWithCustomerRepo permite controlar o comportamento do
+// CustomerRepository nos testes que precisam simular cliente não encontrado.
+func newTestOrderServiceWithCustomerRepo(
+	productRepo *mockProductRepository,
+	orderRepo *mockOrderRepository,
+	customerRepo *mockCustomerRepository,
+) *service.OrderService {
 	uow := &mockUnitOfWork{
 		repos: repository.Repositories{
-			Order:   orderRepo,
-			Product: productRepo,
+			Order:    orderRepo,
+			Product:  productRepo,
+			Customer: customerRepo,
 		},
 	}
 
