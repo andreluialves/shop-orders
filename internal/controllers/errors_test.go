@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"errors"
+	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/andreluialves/shop-orders/internal/domain"
@@ -38,4 +40,41 @@ func TestHandleError(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandleError_DoesNotLeakInternalDetails(t *testing.T) {
+	t.Run("erro desconhecido deve retornar mensagem genérica, sem detalhes internos", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		sensitiveErr := errors.New("connection refused: postgres://user:senha123@10.0.0.5:5432/shop_orders")
+
+		handleError(w, sensitiveErr)
+
+		resp := w.Result()
+		body := w.Body.String()
+
+		if resp.StatusCode != http.StatusInternalServerError {
+			t.Errorf("esperava status 500, recebeu %d", resp.StatusCode)
+		}
+
+		if strings.Contains(body, "senha123") || strings.Contains(body, "10.0.0.5") || strings.Contains(body, "postgres://") {
+			t.Errorf("resposta não deveria conter detalhes internos do erro, recebeu: %v", body)
+		}
+
+		if !strings.Contains(body, "internal server error") {
+			t.Errorf("esperava mensagem genérica 'internal server error', recebeu: %v", body)
+		}
+	})
+
+	t.Run("erro de domínio conhecido pode expor sua própria mensagem", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		handleError(w, domain.ErrCustomerNotFound)
+
+		body := w.Body.String()
+
+		if !strings.Contains(body, domain.ErrCustomerNotFound.Error()) {
+			t.Errorf("esperava mensagem de domínio na resposta, recebeu: %v", body)
+		}
+	})
 }
