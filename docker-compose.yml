@@ -1,7 +1,7 @@
 services:
-  postgres:
+  postgres-orders:
     image: postgres:18.4
-    container_name: postgres18
+    container_name: postgres-orders
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-shop_orders}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shop_orders}
@@ -10,6 +10,27 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+
+  postgres-payments:
+    image: postgres:18.4
+    container_name: postgres-payments
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-payments_service}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-payments_service}
+      POSTGRES_DB: ${POSTGRES_DB:-payments_service}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"   # porta AMQP (usada pela aplicação)
+      - "15672:15672" # painel de administração web
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 volumes:
   postgres_data:
