@@ -1,0 +1,2 @@
+DROP SEQUENCE IF EXISTS payments_id_seq;
+DROP TABLE IF EXISTS payments;
