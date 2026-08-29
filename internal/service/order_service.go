@@ -33,10 +33,14 @@ type CreateOrderItem struct {
 	Quantity int
 }
 
-func (s *OrderService) CreateOrder(ctx context.Context, customer string, items []CreateOrderItem) (*domain.Order, error) {
+func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items []CreateOrderItem) (*domain.Order, error) {
 	var order *domain.Order
 
 	err := s.unitOfWork.Execute(ctx, func(repos repository.Repositories) error {
+		if _, err := repos.Customer.FindByID(customerID); err != nil {
+			return err
+		}
+
 		var orderItems []*domain.OrderItem
 
 		for _, item := range items {
@@ -57,7 +61,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, customer string, items [
 			return err
 		}
 
-		newOrder, err := domain.NewOrder(orderID, customer, orderItems)
+		newOrder, err := domain.NewOrder(orderID, customerID, orderItems)
 		if err != nil {
 			return err
 		}

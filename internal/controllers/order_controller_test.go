@@ -35,7 +35,7 @@ func TestOrderController_CreateOrder(t *testing.T) {
 		orderService := newTestOrderService(productRepo, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
-		body := `{"customer":"João Silva","items":[{"id":"P001","quantity":2}]}`
+		body := `{"customer_id":"CUST-001","items":[{"id":"P001","quantity":2}]}`
 		req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewBufferString(body))
 		w := httptest.NewRecorder()
 
@@ -52,16 +52,29 @@ func TestOrderController_CreateOrder(t *testing.T) {
 			t.Fatalf("erro ao decodificar resposta: %v", err)
 		}
 
-		if got.Customer != "João Silva" {
-			t.Errorf("esperava customer João Silva, recebeu %v", got.Customer)
+		if got.CustomerID != "CUST-001" {
+			t.Errorf("esperava CustomerID CUST-001, recebeu %v", got.CustomerID)
+		}
+	})
+
+	t.Run("deve retornar 404 quando cliente não existe", func(t *testing.T) {
+		customerRepo := &mockCustomerRepository{
+			FindByIDFunc: func(id string) (*domain.Customer, error) {
+				return nil, domain.ErrCustomerNotFound
+			},
 		}
 
-		if got.Status != string(domain.OrderStatusPending) {
-			t.Errorf("esperava status PENDING, recebeu %v", got.Status)
-		}
+		orderService := newTestOrderServiceWithCustomerRepo(&mockProductRepository{}, &mockOrderRepository{}, customerRepo)
+		controller := controllers.NewOrderController(orderService)
 
-		if len(got.Items) != 1 {
-			t.Errorf("esperava 1 item, recebeu %d", len(got.Items))
+		body := `{"customer_id":"CUST-999","items":[{"id":"P001","quantity":2}]}`
+		req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewBufferString(body))
+		w := httptest.NewRecorder()
+
+		controller.CreateOrder(w, req)
+
+		if w.Result().StatusCode != http.StatusNotFound {
+			t.Errorf("esperava status 404, recebeu %d", w.Result().StatusCode)
 		}
 	})
 

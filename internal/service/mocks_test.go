@@ -64,10 +64,27 @@ func (m *mockUnitOfWork) Execute(ctx context.Context, fn func(repos repository.R
 // mesmos mocks de repository tanto nas dependências diretas quanto dentro
 // do UnitOfWork — evita repetir esse setup em cada teste.
 func newTestOrderService(productRepo *mockProductRepository, orderRepo *mockOrderRepository) *service.OrderService {
+	customerRepo := &mockCustomerRepository{
+		FindByIDFunc: func(id string) (*domain.Customer, error) {
+			return &domain.Customer{ID: id, Name: "Cliente Teste"}, nil
+		},
+	}
+
+	return newTestOrderServiceWithCustomerRepo(productRepo, orderRepo, customerRepo)
+}
+
+// newTestOrderServiceWithCustomerRepo permite controlar o comportamento do
+// CustomerRepository nos testes que precisam simular cliente não encontrado.
+func newTestOrderServiceWithCustomerRepo(
+	productRepo *mockProductRepository,
+	orderRepo *mockOrderRepository,
+	customerRepo *mockCustomerRepository,
+) *service.OrderService {
 	uow := &mockUnitOfWork{
 		repos: repository.Repositories{
-			Order:   orderRepo,
-			Product: productRepo,
+			Order:    orderRepo,
+			Product:  productRepo,
+			Customer: customerRepo,
 		},
 	}
 
@@ -85,4 +102,33 @@ func (m *mockOrderIDGenerator) NextOrderID(ctx context.Context) (string, error) 
 		return m.NextOrderIDFunc(ctx)
 	}
 	return "PED-TEST", nil // valor padrão razoável, se o teste não se importar com o ID exato
+}
+
+type mockCustomerRepository struct {
+	FindByIDFunc func(id string) (*domain.Customer, error)
+	SaveFunc     func(customer *domain.Customer) error
+	ListFunc     func() ([]*domain.Customer, error)
+}
+
+func (m *mockCustomerRepository) FindByID(id string) (*domain.Customer, error) {
+	return m.FindByIDFunc(id)
+}
+
+func (m *mockCustomerRepository) Save(customer *domain.Customer) error {
+	return m.SaveFunc(customer)
+}
+
+func (m *mockCustomerRepository) List() ([]*domain.Customer, error) {
+	return m.ListFunc()
+}
+
+type mockCustomerIDGenerator struct {
+	NextCustomerIDFunc func(ctx context.Context) (string, error)
+}
+
+func (m *mockCustomerIDGenerator) NextCustomerID(ctx context.Context) (string, error) {
+	if m.NextCustomerIDFunc != nil {
+		return m.NextCustomerIDFunc(ctx)
+	}
+	return "CUST-TEST", nil
 }

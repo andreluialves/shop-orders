@@ -51,7 +51,7 @@ func (oc *OrderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	order, err := oc.orderService.CreateOrder(
 		r.Context(),
-		request.Customer,
+		request.CustomerID,
 		items,
 	)
 

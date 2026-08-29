@@ -31,7 +31,7 @@ func (l *LoggingOrderRepository) FindByID(id string) (*domain.Order, error) {
 }
 
 func (l *LoggingOrderRepository) Save(order *domain.Order) error {
-	l.logger.Info("salvando novo pedido", "order_id", order.ID, "customer", order.Customer)
+	l.logger.Info("salvando novo pedido", "order_id", order.ID, "customer", order.CustomerID)
 
 	if err := l.inner.Save(order); err != nil {
 		l.logger.Error("falha ao salvar pedido", "order_id", order.ID, "error", err)
