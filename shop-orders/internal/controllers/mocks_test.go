@@ -3,9 +3,9 @@ package controllers_test
 import (
 	"context"
 
-	"github.com/andreluialves/shop-orders/internal/domain"
-	"github.com/andreluialves/shop-orders/internal/repository"
-	"github.com/andreluialves/shop-orders/internal/service"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/repository"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/service"
 )
 
 type mockProductRepository struct {

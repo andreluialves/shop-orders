@@ -5,14 +5,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/andreluialves/shop-orders/internal/logger"
-	"github.com/andreluialves/shop-orders/internal/repository"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/logger"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/repository"
 
-	"github.com/andreluialves/shop-orders/config"
-	"github.com/andreluialves/shop-orders/internal/controllers"
-	"github.com/andreluialves/shop-orders/internal/database"
-	"github.com/andreluialves/shop-orders/internal/routes"
-	"github.com/andreluialves/shop-orders/internal/service"
+	"github.com/andreluialves/shop-orders/shop-orders/config"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/controllers"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/database"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/routes"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/service"
 )
 
 func main() {

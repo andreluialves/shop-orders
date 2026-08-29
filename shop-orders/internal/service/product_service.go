@@ -3,8 +3,8 @@ package service
 import (
 	"fmt"
 
-	"github.com/andreluialves/shop-orders/internal/domain"
-	"github.com/andreluialves/shop-orders/internal/repository"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/repository"
 )
 
 type ProductService struct {

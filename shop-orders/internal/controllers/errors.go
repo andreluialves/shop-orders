@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/andreluialves/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
 )
 
 func handleError(w http.ResponseWriter, err error) {
