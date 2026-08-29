@@ -14,53 +14,53 @@ func TestNewOrder(t *testing.T) {
 		Quantity: 10,
 	}
 
-	testCases := []struct {
-		name     string
-		customer string
-		items    []*domain.OrderItem
-		wantErr  error
+	tests := []struct {
+		name       string
+		customerID string
+		items      []*domain.OrderItem
+		wantErr    error
 	}{
 		{
-			name:     "deve criar pedido válido",
-			customer: "João Silva",
+			name:       "deve criar pedido válido",
+			customerID: "CUST-001",
 			items: []*domain.OrderItem{
 				domain.NewOrderItem(validProduct, 2, 3500),
 			},
 			wantErr: nil,
 		},
 		{
-			name:     "não deve criar pedido sem customer",
-			customer: "",
+			name:       "não deve criar pedido sem customerID",
+			customerID: "",
 			items: []*domain.OrderItem{
 				domain.NewOrderItem(validProduct, 2, 3500),
 			},
 			wantErr: domain.ErrInvalidCustomer,
 		},
 		{
-			name:     "não deve criar pedido com customer só com espaços",
-			customer: "   ",
+			name:       "não deve criar pedido com customerID só com espaços",
+			customerID: "   ",
 			items: []*domain.OrderItem{
 				domain.NewOrderItem(validProduct, 2, 3500),
 			},
 			wantErr: domain.ErrInvalidCustomer,
 		},
 		{
-			name:     "não deve criar pedido sem itens",
-			customer: "João Silva",
-			items:    []*domain.OrderItem{},
-			wantErr:  domain.ErrEmptyOrder,
+			name:       "não deve criar pedido sem itens",
+			customerID: "CUST-001",
+			items:      []*domain.OrderItem{},
+			wantErr:    domain.ErrEmptyOrder,
 		},
 		{
-			name:     "não deve criar pedido com item sem produto",
-			customer: "João Silva",
+			name:       "não deve criar pedido com item sem produto",
+			customerID: "CUST-001",
 			items: []*domain.OrderItem{
 				domain.NewOrderItem(nil, 2, 3500),
 			},
 			wantErr: domain.ErrProductNotFound,
 		},
 		{
-			name:     "não deve criar pedido com quantidade inválida",
-			customer: "João Silva",
+			name:       "não deve criar pedido com quantidade inválida",
+			customerID: "CUST-001",
 			items: []*domain.OrderItem{
 				domain.NewOrderItem(validProduct, 0, 3500),
 			},
@@ -68,13 +68,13 @@ func TestNewOrder(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			order, err := domain.NewOrder("ORD-001", tc.customer, tc.items)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			order, err := domain.NewOrder("ORD-001", tt.customerID, tt.items)
 
-			if tc.wantErr != nil {
-				if err != tc.wantErr {
-					t.Errorf("esperava erro %v, recebeu %v", tc.wantErr, err)
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("esperava erro %v, recebeu %v", tt.wantErr, err)
 				}
 				if order != nil {
 					t.Errorf("esperava order nil em caso de erro, recebeu %v", order)
@@ -86,6 +86,10 @@ func TestNewOrder(t *testing.T) {
 				t.Errorf("não esperava erro, recebeu %v", err)
 			}
 
+			if order.CustomerID != tt.customerID {
+				t.Errorf("esperava customerID %v, recebeu %v", tt.customerID, order.CustomerID)
+			}
+
 			if order.Status() != domain.OrderStatusPending {
 				t.Errorf("esperava status PENDING, recebeu %v", order.Status())
 			}
@@ -93,8 +97,55 @@ func TestNewOrder(t *testing.T) {
 	}
 }
 
+func TestOrder_Pay(t *testing.T) {
+	tests := []struct {
+		name          string
+		initialStatus domain.OrderStatus
+		wantErr       error
+	}{
+		{
+			name:          "deve pagar pedido pendente",
+			initialStatus: domain.OrderStatusPending,
+			wantErr:       nil,
+		},
+		{
+			name:          "não deve pagar pedido já pago",
+			initialStatus: domain.OrderStatusPaid,
+			wantErr:       domain.ErrChangeStatusInvalid,
+		},
+		{
+			name:          "não deve pagar pedido cancelado",
+			initialStatus: domain.OrderStatusCanceled,
+			wantErr:       domain.ErrChangeStatusInvalid,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			order := domain.RestoreOrder("PED-001", "CUST-001", tt.initialStatus)
+
+			err := order.Pay()
+
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("esperava erro %v, recebeu %v", tt.wantErr, err)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("não esperava erro, recebeu %v", err)
+			}
+
+			if order.Status() != domain.OrderStatusPaid {
+				t.Errorf("esperava status PAID, recebeu %v", order.Status())
+			}
+		})
+	}
+}
+
 func TestOrder_Cancel(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name          string
 		initialStatus domain.OrderStatus
 		wantErr       error
@@ -116,15 +167,15 @@ func TestOrder_Cancel(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			order := domain.RestoreOrder("ORD-001", "João Silva", tc.initialStatus)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			order := domain.RestoreOrder("PED-001", "CUST-001", tt.initialStatus)
 
 			err := order.Cancel()
 
-			if tc.wantErr != nil {
-				if err != tc.wantErr {
-					t.Errorf("esperava erro %v, recebeu %v", tc.wantErr, err)
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("esperava erro %v, recebeu %v", tt.wantErr, err)
 				}
 				return
 			}
@@ -144,7 +195,7 @@ func TestOrder_TotalSum(t *testing.T) {
 	product1 := &domain.Product{ID: "P001", Name: "Notebook", Price: 3500, Quantity: 10}
 	product2 := &domain.Product{ID: "P002", Name: "Mouse", Price: 150, Quantity: 20}
 
-	testCases := []struct {
+	tests := []struct {
 		name  string
 		items []*domain.OrderItem
 		want  float64
@@ -171,23 +222,21 @@ func TestOrder_TotalSum(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			order, err := domain.NewOrder("ORD-001", "João Silva", tc.items)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			order, err := domain.NewOrder("ORD-001", "CUST-001", tt.items)
 
-			// Para o caso de itens vazios, NewOrder retorna erro (ErrEmptyOrder),
-			// então foi usado TotalSum via RestoreOrder + AddItem manual
 			if err != nil {
-				order = domain.RestoreOrder("ORD-001", "João Silva", domain.OrderStatusPending)
-				for _, item := range tc.items {
+				order = domain.RestoreOrder("ORD-001", "CUST-001", domain.OrderStatusPending)
+				for _, item := range tt.items {
 					order.AddItem(item)
 				}
 			}
 
 			got := order.TotalSum()
 
-			if got != tc.want {
-				t.Errorf("esperava total %v, recebeu %v", tc.want, got)
+			if got != tt.want {
+				t.Errorf("esperava total %v, recebeu %v", tt.want, got)
 			}
 		})
 	}
@@ -196,7 +245,7 @@ func TestOrder_TotalSum(t *testing.T) {
 func TestOrderItem_Validate(t *testing.T) {
 	validProduct := &domain.Product{ID: "P001", Name: "Notebook", Price: 3500, Quantity: 10}
 
-	testCases := []struct {
+	tests := []struct {
 		name    string
 		item    *domain.OrderItem
 		wantErr error
@@ -223,12 +272,12 @@ func TestOrderItem_Validate(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.item.Validate()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.item.Validate()
 
-			if err != tc.wantErr {
-				t.Errorf("esperava erro %v, recebeu %v", tc.wantErr, err)
+			if err != tt.wantErr {
+				t.Errorf("esperava erro %v, recebeu %v", tt.wantErr, err)
 			}
 		})
 	}

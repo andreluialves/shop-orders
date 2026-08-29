@@ -29,17 +29,16 @@ func NewOrderItemResponse(item *domain.OrderItem) OrderItemResponse {
 }
 
 type CreateOrderRequest struct {
-	Customer string            `json:"customer"`
-	Items    []CreateOrderItem `json:"items"`
-	Status   string            `json:"status"`
+	CustomerID string            `json:"customer_id"`
+	Items      []CreateOrderItem `json:"items"`
 }
 
 type OrderResponse struct {
-	ID       string              `json:"id"`
-	Customer string              `json:"customer"`
-	Total    float64             `json:"total"`
-	Status   string              `json:"status"`
-	Items    []OrderItemResponse `json:"items"`
+	ID         string              `json:"id"`
+	CustomerID string              `json:"customer_id"`
+	Total      float64             `json:"total"`
+	Status     string              `json:"status"`
+	Items      []OrderItemResponse `json:"items"`
 }
 
 func NewOrderResponse(order *domain.Order) OrderResponse {
@@ -50,10 +49,10 @@ func NewOrderResponse(order *domain.Order) OrderResponse {
 	}
 
 	return OrderResponse{
-		ID:       order.ID,
-		Customer: order.Customer,
-		Total:    order.TotalSum(),
-		Status:   string(order.Status()),
-		Items:    items,
+		ID:         order.ID,
+		CustomerID: order.CustomerID,
+		Total:      order.TotalSum(),
+		Status:     string(order.Status()),
+		Items:      items,
 	}
 }

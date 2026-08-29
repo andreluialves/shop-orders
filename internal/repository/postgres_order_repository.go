@@ -6,14 +6,13 @@ import (
 
 	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PostgresOrderRepository struct {
-	db *pgxpool.Pool
+	db DBTX
 }
 
-func NewPostgresOrderRepository(db *pgxpool.Pool) *PostgresOrderRepository {
+func NewPostgresOrderRepository(db DBTX) *PostgresOrderRepository {
 	return &PostgresOrderRepository{
 		db: db,
 	}
@@ -26,7 +25,7 @@ func (r *PostgresOrderRepository) Save(order *domain.Order) error {
 	query := `
 		INSERT INTO orders (
 			id,
-			customer,
+			customer_id,
 			status
 		)
 		VALUES ($1, $2, $3)
@@ -36,7 +35,7 @@ func (r *PostgresOrderRepository) Save(order *domain.Order) error {
 		ctx,
 		query,
 		order.ID,
-		order.Customer,
+		order.CustomerID,
 		order.Status(),
 	)
 
@@ -100,7 +99,7 @@ func (r *PostgresOrderRepository) FindByID(id string) (*domain.Order, error) {
 	query := `
 		SELECT
 			id,
-			customer,
+			customer_id,
 			status
 		FROM orders
 		WHERE id = $1
@@ -109,14 +108,14 @@ func (r *PostgresOrderRepository) FindByID(id string) (*domain.Order, error) {
 	row := r.db.QueryRow(ctx, query, id)
 
 	var (
-		orderID  string
-		customer string
-		status   string
+		orderID    string
+		customerID string
+		status     string
 	)
 
 	if err := row.Scan(
 		&orderID,
-		&customer,
+		&customerID,
 		&status,
 	); err != nil {
 
@@ -129,7 +128,7 @@ func (r *PostgresOrderRepository) FindByID(id string) (*domain.Order, error) {
 
 	order := domain.RestoreOrder(
 		orderID,
-		customer,
+		customerID,
 		domain.OrderStatus(status),
 	)
 

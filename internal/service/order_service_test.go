@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 
 func TestOrderService_PayOrder(t *testing.T) {
 	t.Run("deve pagar pedido pendente com sucesso", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusPending)
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
 
 		var updateCalled bool
 
@@ -24,7 +25,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		result, err := s.PayOrder("PED-001")
 
@@ -48,7 +49,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		_, err := s.PayOrder("PED-999")
 
@@ -58,7 +59,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 	})
 
 	t.Run("não deve pagar pedido já pago, e Update não deve ser chamado", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusPaid)
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPaid)
 
 		var updateCalled bool
 
@@ -72,7 +73,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		_, err := s.PayOrder("PED-001")
 
@@ -86,7 +87,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 	})
 
 	t.Run("deve propagar erro quando Update falha", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusPending)
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
 
 		orderRepo := &mockOrderRepository{
 			FindByIDFunc: func(id string) (*domain.Order, error) {
@@ -97,7 +98,7 @@ func TestOrderService_PayOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
 		_, err := s.PayOrder("PED-001")
 
@@ -112,7 +113,7 @@ func TestOrderService_CancelOrder(t *testing.T) {
 	item := domain.NewOrderItem(product, 2, 3500)
 
 	t.Run("deve cancelar pedido e restaurar estoque", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusPending)
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
 		order.AddItem(item)
 
 		var savedQuantity int
@@ -138,9 +139,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		result, err := s.CancelOrder("PED-001")
+		result, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if err != nil {
 			t.Fatalf("não esperava erro, recebeu %v", err)
@@ -160,7 +161,7 @@ func TestOrderService_CancelOrder(t *testing.T) {
 	})
 
 	t.Run("não deve cancelar pedido já cancelado", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusCanceled)
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusCanceled)
 		order.AddItem(item)
 
 		var productSaveCalled bool
@@ -178,9 +179,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		_, err := s.CancelOrder("PED-001")
+		_, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if !errors.Is(err, domain.ErrChangeStatusInvalid) {
 			t.Errorf("esperava ErrChangeStatusInvalid, recebeu %v", err)
@@ -192,7 +193,7 @@ func TestOrderService_CancelOrder(t *testing.T) {
 	})
 
 	t.Run("deve retornar erro quando produto não é encontrado no loop", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusPending)
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
 		order.AddItem(item)
 
 		orderRepo := &mockOrderRepository{
@@ -207,9 +208,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		_, err := s.CancelOrder("PED-001")
+		_, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if err == nil {
 			t.Error("esperava erro quando produto não é encontrado, recebeu nil")
@@ -217,7 +218,7 @@ func TestOrderService_CancelOrder(t *testing.T) {
 	})
 
 	t.Run("não deve chamar Update do pedido se falhar ao salvar produto", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusPending)
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
 		order.AddItem(item)
 
 		var orderUpdateCalled bool
@@ -241,9 +242,9 @@ func TestOrderService_CancelOrder(t *testing.T) {
 			},
 		}
 
-		s := service.NewOrderService(productRepo, orderRepo)
+		s := newTestOrderService(productRepo, orderRepo)
 
-		_, err := s.CancelOrder("PED-001")
+		_, err := s.CancelOrder(context.Background(), "PED-001")
 
 		if err == nil {
 			t.Error("esperava erro propagado do Save do produto")
@@ -251,6 +252,171 @@ func TestOrderService_CancelOrder(t *testing.T) {
 
 		if orderUpdateCalled {
 			t.Error("Update do pedido não deveria ser chamado se Save do produto falhou antes")
+		}
+	})
+}
+
+func TestOrderService_CreateOrder(t *testing.T) {
+	t.Run("deve criar pedido quando cliente e produtos existem", func(t *testing.T) {
+		product := domain.RestoreProduct("P001", "Notebook", 3500, 10)
+
+		var savedOrder *domain.Order
+		var savedProductQuantity int
+
+		productRepo := &mockProductRepository{
+			FindByIDFunc: func(id string) (*domain.Product, error) {
+				return product, nil
+			},
+			SaveFunc: func(p *domain.Product) error {
+				savedProductQuantity = p.Quantity
+				return nil
+			},
+		}
+
+		orderRepo := &mockOrderRepository{
+			SaveFunc: func(o *domain.Order) error {
+				savedOrder = o
+				return nil
+			},
+		}
+
+		s := newTestOrderService(productRepo, orderRepo)
+
+		items := []service.CreateOrderItem{{ID: "P001", Quantity: 2}}
+
+		order, err := s.CreateOrder(context.Background(), "CUST-001", items)
+
+		if err != nil {
+			t.Fatalf("não esperava erro, recebeu %v", err)
+		}
+
+		if order.CustomerID != "CUST-001" {
+			t.Errorf("esperava CustomerID CUST-001, recebeu %v", order.CustomerID)
+		}
+
+		if savedProductQuantity != 8 {
+			t.Errorf("esperava estoque reduzido para 8 (10-2), recebeu %v", savedProductQuantity)
+		}
+
+		if savedOrder == nil {
+			t.Error("esperava que Order.Save fosse chamado")
+		}
+	})
+
+	t.Run("não deve criar pedido quando cliente não existe", func(t *testing.T) {
+		var orderSaveCalled bool
+		var productFindCalled bool
+
+		productRepo := &mockProductRepository{
+			FindByIDFunc: func(id string) (*domain.Product, error) {
+				productFindCalled = true
+				return domain.RestoreProduct("P001", "Notebook", 3500, 10), nil
+			},
+		}
+
+		orderRepo := &mockOrderRepository{
+			SaveFunc: func(o *domain.Order) error {
+				orderSaveCalled = true
+				return nil
+			},
+		}
+
+		customerRepo := &mockCustomerRepository{
+			FindByIDFunc: func(id string) (*domain.Customer, error) {
+				return nil, domain.ErrCustomerNotFound
+			},
+		}
+
+		s := newTestOrderServiceWithCustomerRepo(productRepo, orderRepo, customerRepo)
+
+		items := []service.CreateOrderItem{{ID: "P001", Quantity: 2}}
+
+		_, err := s.CreateOrder(context.Background(), "CUST-999", items)
+
+		if !errors.Is(err, domain.ErrCustomerNotFound) {
+			t.Errorf("esperava ErrCustomerNotFound, recebeu %v", err)
+		}
+
+		if productFindCalled {
+			t.Error("não deveria buscar produtos se o cliente não existe")
+		}
+
+		if orderSaveCalled {
+			t.Error("Order.Save não deveria ser chamado quando cliente não existe")
+		}
+	})
+
+	t.Run("não deve salvar pedido se produto não é encontrado", func(t *testing.T) {
+		var orderSaveCalled bool
+
+		productRepo := &mockProductRepository{
+			FindByIDFunc: func(id string) (*domain.Product, error) {
+				return nil, domain.ErrProductNotFound
+			},
+		}
+
+		orderRepo := &mockOrderRepository{
+			SaveFunc: func(o *domain.Order) error {
+				orderSaveCalled = true
+				return nil
+			},
+		}
+
+		s := newTestOrderService(productRepo, orderRepo)
+
+		items := []service.CreateOrderItem{{ID: "P999", Quantity: 2}}
+
+		_, err := s.CreateOrder(context.Background(), "CUST-001", items)
+
+		if !errors.Is(err, domain.ErrProductNotFound) {
+			t.Errorf("esperava ErrProductNotFound, recebeu %v", err)
+		}
+
+		if orderSaveCalled {
+			t.Error("Order.Save não deveria ser chamado quando produto não é encontrado")
+		}
+	})
+
+	t.Run("não deve salvar pedido se estoque de algum item é insuficiente", func(t *testing.T) {
+		productA := domain.RestoreProduct("P001", "Notebook", 3500, 10)
+		productB := domain.RestoreProduct("P002", "Mouse", 150, 1)
+
+		var orderSaveCalled bool
+
+		productRepo := &mockProductRepository{
+			FindByIDFunc: func(id string) (*domain.Product, error) {
+				if id == "P001" {
+					return productA, nil
+				}
+				return productB, nil
+			},
+			SaveFunc: func(p *domain.Product) error {
+				return nil
+			},
+		}
+
+		orderRepo := &mockOrderRepository{
+			SaveFunc: func(o *domain.Order) error {
+				orderSaveCalled = true
+				return nil
+			},
+		}
+
+		s := newTestOrderService(productRepo, orderRepo)
+
+		items := []service.CreateOrderItem{
+			{ID: "P001", Quantity: 2},
+			{ID: "P002", Quantity: 5},
+		}
+
+		_, err := s.CreateOrder(context.Background(), "CUST-001", items)
+
+		if !errors.Is(err, domain.ErrInsufficientQuantity) {
+			t.Errorf("esperava ErrInsufficientQuantity, recebeu %v", err)
+		}
+
+		if orderSaveCalled {
+			t.Error("Order.Save não deveria ser chamado quando algum item tem estoque insuficiente")
 		}
 	})
 }

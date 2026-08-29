@@ -11,7 +11,6 @@ import (
 	"github.com/andreluialves/shop-orders/internal/controllers"
 	"github.com/andreluialves/shop-orders/internal/domain"
 	"github.com/andreluialves/shop-orders/internal/dto"
-	"github.com/andreluialves/shop-orders/internal/service"
 )
 
 func TestOrderController_CreateOrder(t *testing.T) {
@@ -33,10 +32,10 @@ func TestOrderController_CreateOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(productRepo, orderRepo)
+		orderService := newTestOrderService(productRepo, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
-		body := `{"customer":"João Silva","items":[{"id":"P001","quantity":2}]}`
+		body := `{"customer_id":"CUST-001","items":[{"id":"P001","quantity":2}]}`
 		req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewBufferString(body))
 		w := httptest.NewRecorder()
 
@@ -53,21 +52,34 @@ func TestOrderController_CreateOrder(t *testing.T) {
 			t.Fatalf("erro ao decodificar resposta: %v", err)
 		}
 
-		if got.Customer != "João Silva" {
-			t.Errorf("esperava customer João Silva, recebeu %v", got.Customer)
+		if got.CustomerID != "CUST-001" {
+			t.Errorf("esperava CustomerID CUST-001, recebeu %v", got.CustomerID)
+		}
+	})
+
+	t.Run("deve retornar 404 quando cliente não existe", func(t *testing.T) {
+		customerRepo := &mockCustomerRepository{
+			FindByIDFunc: func(id string) (*domain.Customer, error) {
+				return nil, domain.ErrCustomerNotFound
+			},
 		}
 
-		if got.Status != string(domain.OrderStatusPending) {
-			t.Errorf("esperava status PENDING, recebeu %v", got.Status)
-		}
+		orderService := newTestOrderServiceWithCustomerRepo(&mockProductRepository{}, &mockOrderRepository{}, customerRepo)
+		controller := controllers.NewOrderController(orderService)
 
-		if len(got.Items) != 1 {
-			t.Errorf("esperava 1 item, recebeu %d", len(got.Items))
+		body := `{"customer_id":"CUST-999","items":[{"id":"P001","quantity":2}]}`
+		req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewBufferString(body))
+		w := httptest.NewRecorder()
+
+		controller.CreateOrder(w, req)
+
+		if w.Result().StatusCode != http.StatusNotFound {
+			t.Errorf("esperava status 404, recebeu %d", w.Result().StatusCode)
 		}
 	})
 
 	t.Run("deve retornar 400 quando body é JSON inválido", func(t *testing.T) {
-		orderService := service.NewOrderService(&mockProductRepository{}, &mockOrderRepository{})
+		orderService := newTestOrderService(&mockProductRepository{}, &mockOrderRepository{})
 		controller := controllers.NewOrderController(orderService)
 
 		body := `{"customer": "João",` // malformado
@@ -90,7 +102,7 @@ func TestOrderController_CreateOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(productRepo, &mockOrderRepository{})
+		orderService := newTestOrderService(productRepo, &mockOrderRepository{})
 		controller := controllers.NewOrderController(orderService)
 
 		body := `{"customer":"João Silva","items":[{"id":"P999","quantity":2}]}`
@@ -115,7 +127,7 @@ func TestOrderController_CreateOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(productRepo, &mockOrderRepository{})
+		orderService := newTestOrderService(productRepo, &mockOrderRepository{})
 		controller := controllers.NewOrderController(orderService)
 
 		body := `{"customer":"João Silva","items":[{"id":"P001","quantity":5}]}`
@@ -140,7 +152,7 @@ func TestOrderController_CreateOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(productRepo, &mockOrderRepository{})
+		orderService := newTestOrderService(productRepo, &mockOrderRepository{})
 		controller := controllers.NewOrderController(orderService)
 
 		body := `{"customer":"","items":[{"id":"P001","quantity":2}]}`
@@ -167,7 +179,7 @@ func TestOrderController_FindAllOrders(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodGet, "/orders?limit=10&offset=0", nil)
@@ -206,7 +218,7 @@ func TestOrderController_FindAllOrders(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodGet, "/orders", nil)
@@ -232,7 +244,7 @@ func TestOrderController_FindOrderByID(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodGet, "/orders/PED-001", nil)
@@ -255,7 +267,7 @@ func TestOrderController_FindOrderByID(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodGet, "/orders/PED-999", nil)
@@ -285,7 +297,7 @@ func TestOrderController_PayOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodPost, "/orders/PED-001/pay", nil)
@@ -319,7 +331,7 @@ func TestOrderController_PayOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodPost, "/orders/PED-001/pay", nil)
@@ -342,7 +354,7 @@ func TestOrderController_PayOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodPost, "/orders/PED-999/pay", nil)
@@ -385,7 +397,7 @@ func TestOrderController_CancelOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(productRepo, orderRepo)
+		orderService := newTestOrderService(productRepo, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodPost, "/orders/PED-001/cancel", nil)
@@ -419,7 +431,7 @@ func TestOrderController_CancelOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodPost, "/orders/PED-001/cancel", nil)
@@ -442,7 +454,7 @@ func TestOrderController_CancelOrder(t *testing.T) {
 			},
 		}
 
-		orderService := service.NewOrderService(&mockProductRepository{}, orderRepo)
+		orderService := newTestOrderService(&mockProductRepository{}, orderRepo)
 		controller := controllers.NewOrderController(orderService)
 
 		req := httptest.NewRequest(http.MethodPost, "/orders/PED-999/cancel", nil)

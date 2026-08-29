@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/andreluialves/shop-orders/internal/logger"
 	"github.com/andreluialves/shop-orders/internal/repository"
 
 	"github.com/andreluialves/shop-orders/config"
@@ -31,41 +32,34 @@ func main() {
 
 	log.Println("Connected to PostgreSQL")
 
+	appLogger := logger.NewSlogLogger()
+
 	// Repositories
 	productRepository := repository.NewPostgresProductRepository(db)
 	orderRepository := repository.NewPostgresOrderRepository(db)
+	customerRepository := repository.NewPostgresCustomerRepository(db)
+
+	// Decorators com logging
+	loggedOrderRepo := repository.NewLoggingOrderRepository(orderRepository, appLogger)
+	loggedProductRepo := repository.NewLoggingProductRepository(productRepository, appLogger)
+	loggedCustomerRepo := repository.NewLoggingCustomerRepository(customerRepository, appLogger)
+
+	unitOfWork := repository.NewPostgresUnitOfWork(db)
+	orderIDGenerator := repository.NewPostgresOrderIDGenerator(db)
+	customerIDGenerator := repository.NewPostgresCustomerIDGenerator(db)
 
 	// Services
-	orderService := service.NewOrderService(
-		productRepository,
-		orderRepository,
-	)
-
-	productService := service.NewProductService(productRepository)
-
-	// // Teste de criação de um pedido no banco de dados
-	// order, err := orderService.CreateOrder(
-	// 	"João Silva",
-	// 	[]service.CreateOrderItem{
-	// 		{
-	// 			ProductID: "P001",
-	// 			Quantity:  2,
-	// 		},
-	// 	},
-	// )
-
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// log.Printf("Pedido criado: %s", order.ID)
+	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork, orderIDGenerator)
+	productService := service.NewProductService(loggedProductRepo)
+	customerService := service.NewCustomerService(loggedCustomerRepo, customerIDGenerator)
 
 	// Controllers
 	productController := controllers.NewProductController(productService)
 	orderController := controllers.NewOrderController(orderService)
+	customerController := controllers.NewCustomerController(customerService)
 
 	// Cria o roteador
-	router := routes.NewRouter(productController, orderController)
+	router := routes.NewRouter(productController, orderController, customerController)
 
 	log.Println("Server running on :8080")
 
