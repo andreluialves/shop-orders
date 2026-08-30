@@ -1,4 +1,4 @@
-module github.com/andreluialves/shop-orders
+module github.com/andreluialves/shop-orders/shop-orders
 
 go 1.26.4
 

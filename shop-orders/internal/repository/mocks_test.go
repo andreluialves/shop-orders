@@ -1,6 +1,6 @@
 package repository_test
 
-import "github.com/andreluialves/shop-orders/internal/domain"
+import "github.com/andreluialves/shop-orders/shop-orders/internal/domain"
 
 type mockOrderRepository struct {
 	FindByIDFunc func(id string) (*domain.Order, error)

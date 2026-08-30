@@ -5,14 +5,15 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/andreluialves/shop-orders/internal/logger"
-	"github.com/andreluialves/shop-orders/internal/repository"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/logger"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/messaging"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/repository"
 
-	"github.com/andreluialves/shop-orders/config"
-	"github.com/andreluialves/shop-orders/internal/controllers"
-	"github.com/andreluialves/shop-orders/internal/database"
-	"github.com/andreluialves/shop-orders/internal/routes"
-	"github.com/andreluialves/shop-orders/internal/service"
+	"github.com/andreluialves/shop-orders/shop-orders/config"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/controllers"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/database"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/routes"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/service"
 )
 
 func main() {
@@ -48,10 +49,22 @@ func main() {
 	orderIDGenerator := repository.NewPostgresOrderIDGenerator(db)
 	customerIDGenerator := repository.NewPostgresCustomerIDGenerator(db)
 
+	//RabbitMQ
+	rabbit, err := messaging.NewRabbitMQ(cfg.RabbitMQURL)
+	if err != nil {
+		log.Fatalf("failed to connect to rabbitmq: %v", err)
+	}
+	defer rabbit.Close()
+
 	// Services
-	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork, orderIDGenerator)
+	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork, orderIDGenerator, rabbit)
 	productService := service.NewProductService(loggedProductRepo)
 	customerService := service.NewCustomerService(loggedCustomerRepo, customerIDGenerator)
+
+	paymentHandler := messaging.NewPaymentProcessedHandler(rabbit, orderService, appLogger)
+	if err := paymentHandler.Start(ctx); err != nil {
+		log.Fatalf("failed to start payment handler: %v", err)
+	}
 
 	// Controllers
 	productController := controllers.NewProductController(productService)

@@ -1,6 +1,6 @@
 package service
 
-import "github.com/andreluialves/shop-orders/internal/domain"
+import "github.com/andreluialves/shop-orders/shop-orders/internal/domain"
 
 func PaidOrders() OrderFilter {
 	return func(order *domain.Order) bool {

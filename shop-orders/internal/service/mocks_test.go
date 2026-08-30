@@ -3,9 +3,9 @@ package service_test
 import (
 	"context"
 
-	"github.com/andreluialves/shop-orders/internal/domain"
-	"github.com/andreluialves/shop-orders/internal/repository"
-	"github.com/andreluialves/shop-orders/internal/service"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/repository"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/service"
 )
 
 type mockOrderRepository struct {
@@ -49,6 +49,17 @@ func (m *mockProductRepository) List() ([]*domain.Product, error) {
 	return m.ListFunc()
 }
 
+type mockEventPublisher struct {
+	PublishFunc func(queue string, body []byte) error
+}
+
+func (m *mockEventPublisher) Publish(queue string, body []byte) error {
+	if m.PublishFunc != nil {
+		return m.PublishFunc(queue, body)
+	}
+	return nil
+}
+
 type mockUnitOfWork struct {
 	repos repository.Repositories
 }
@@ -90,7 +101,31 @@ func newTestOrderServiceWithCustomerRepo(
 
 	idGenerator := &mockOrderIDGenerator{}
 
-	return service.NewOrderService(productRepo, orderRepo, uow, idGenerator)
+	return service.NewOrderService(productRepo, orderRepo, uow, idGenerator, &mockEventPublisher{})
+}
+
+func newTestOrderServiceWithPublisher(
+	productRepo *mockProductRepository,
+	orderRepo *mockOrderRepository,
+	eventPublisher *mockEventPublisher,
+) *service.OrderService {
+	customerRepo := &mockCustomerRepository{
+		FindByIDFunc: func(id string) (*domain.Customer, error) {
+			return &domain.Customer{ID: id, Name: "Cliente Teste"}, nil
+		},
+	}
+
+	uow := &mockUnitOfWork{
+		repos: repository.Repositories{
+			Order:    orderRepo,
+			Product:  productRepo,
+			Customer: customerRepo,
+		},
+	}
+
+	idGenerator := &mockOrderIDGenerator{}
+
+	return service.NewOrderService(productRepo, orderRepo, uow, idGenerator, eventPublisher)
 }
 
 type mockOrderIDGenerator struct {

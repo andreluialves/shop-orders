@@ -9,9 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/andreluialves/shop-orders/internal/controllers"
-	"github.com/andreluialves/shop-orders/internal/domain"
-	"github.com/andreluialves/shop-orders/internal/service"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/controllers"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 

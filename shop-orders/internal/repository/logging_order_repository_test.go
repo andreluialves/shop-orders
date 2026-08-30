@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/andreluialves/shop-orders/internal/domain"
-	"github.com/andreluialves/shop-orders/internal/repository"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/repository"
 )
 
 func TestLoggingOrderRepository_FindByID(t *testing.T) {

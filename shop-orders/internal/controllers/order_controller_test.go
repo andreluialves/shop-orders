@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/andreluialves/shop-orders/internal/controllers"
-	"github.com/andreluialves/shop-orders/internal/domain"
-	"github.com/andreluialves/shop-orders/internal/dto"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/controllers"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/dto"
 )
 
 func TestOrderController_CreateOrder(t *testing.T) {
@@ -285,15 +285,12 @@ func TestOrderController_FindOrderByID(t *testing.T) {
 }
 
 func TestOrderController_PayOrder(t *testing.T) {
-	t.Run("deve pagar pedido pendente e retornar 200", func(t *testing.T) {
-		order := domain.RestoreOrder("PED-001", "João Silva", domain.OrderStatusPending)
+	t.Run("deve publicar solicitação de pagamento e retornar 202", func(t *testing.T) {
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
 
 		orderRepo := &mockOrderRepository{
 			FindByIDFunc: func(id string) (*domain.Order, error) {
 				return order, nil
-			},
-			UpdateFunc: func(o *domain.Order) error {
-				return nil
 			},
 		}
 
@@ -308,8 +305,8 @@ func TestOrderController_PayOrder(t *testing.T) {
 
 		resp := w.Result()
 
-		if resp.StatusCode != http.StatusOK {
-			t.Errorf("esperava status 200, recebeu %d", resp.StatusCode)
+		if resp.StatusCode != http.StatusAccepted { // 202, não 200
+			t.Errorf("esperava status 202, recebeu %d", resp.StatusCode)
 		}
 
 		var got dto.OrderResponse
@@ -317,8 +314,8 @@ func TestOrderController_PayOrder(t *testing.T) {
 			t.Fatalf("erro ao decodificar resposta: %v", err)
 		}
 
-		if got.Status != string(domain.OrderStatusPaid) {
-			t.Errorf("esperava status PAID na resposta, recebeu %v", got.Status)
+		if got.Status != string(domain.OrderStatusPending) {
+			t.Errorf("esperava status PENDING na resposta (confirmação é assíncrona), recebeu %v", got.Status)
 		}
 	})
 

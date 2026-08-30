@@ -13,6 +13,7 @@ import (
 type Config struct {
 	DatabaseURL string
 	Database    DatabaseConfig
+	RabbitMQURL string
 	Auth        AuthConfig
 	Port        string
 }
@@ -55,6 +56,8 @@ func Load() Config {
 	return Config{
 		DatabaseURL: databaseURL,
 		Database:    database,
+		RabbitMQURL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
+
 		Auth: AuthConfig{
 			JWTSecret:               getEnv("JWT_SECRET", ""),
 			AccessTokenTTL:          getDurationEnv("JWT_ACCESS_TOKEN_TTL", 15*time.Minute),

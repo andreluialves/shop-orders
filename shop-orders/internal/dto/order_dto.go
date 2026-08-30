@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/andreluialves/shop-orders/internal/domain"
+import "github.com/andreluialves/shop-orders/shop-orders/internal/domain"
 
 type CreateOrderItem struct {
 	ID       string `json:"id"`
