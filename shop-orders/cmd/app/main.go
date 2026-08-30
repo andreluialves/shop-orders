@@ -61,6 +61,11 @@ func main() {
 	productService := service.NewProductService(loggedProductRepo)
 	customerService := service.NewCustomerService(loggedCustomerRepo, customerIDGenerator)
 
+	paymentHandler := messaging.NewPaymentProcessedHandler(rabbit, orderService, appLogger)
+	if err := paymentHandler.Start(ctx); err != nil {
+		log.Fatalf("failed to start payment handler: %v", err)
+	}
+
 	// Controllers
 	productController := controllers.NewProductController(productService)
 	orderController := controllers.NewOrderController(orderService)
