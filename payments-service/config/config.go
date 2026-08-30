@@ -39,12 +39,12 @@ func Load() Config {
 	}
 
 	database := DatabaseConfig{
-		Host:     getEnv("POSTGRES_HOST", "localhost"),
-		Port:     getEnv("POSTGRES_PORT", "5432"),
-		User:     getEnv("POSTGRES_USER", "shop_orders"),
-		Password: getEnv("POSTGRES_PASSWORD", "shop_orders"),
-		Name:     getEnv("POSTGRES_DB", "shop_orders"),
-		SSLMode:  getEnv("POSTGRES_SSLMODE", "disable"),
+		Host:     getEnv("POSTGRES_PAYMENTS_HOST", "localhost"),
+		Port:     getEnv("POSTGRES_PAYMENTS_PORT", "5432"),
+		User:     getEnv("POSTGRES_PAYMENTS_USER", "shop_orders"),
+		Password: getEnv("POSTGRES_PAYMENTS_PASSWORD", "shop_orders"),
+		Name:     getEnv("POSTGRES_PAYMENTS_DB", "shop_orders"),
+		SSLMode:  getEnv("POSTGRES_PAYMENTS_SSLMODE", "disable"),
 	}
 
 	databaseURL := getEnv("DATABASE_URL", "")
