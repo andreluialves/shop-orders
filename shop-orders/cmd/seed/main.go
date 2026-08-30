@@ -16,11 +16,11 @@ func main() {
 		log.Println("Aviso: arquivo .env não encontrado, usando variáveis do ambiente")
 	}
 
-	host := os.Getenv("POSTGRES_HOST")
-	port := os.Getenv("POSTGRES_PORT")
-	user := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	dbname := os.Getenv("POSTGRES_DB")
+	host := os.Getenv("POSTGRES_ORDERS_HOST")
+	port := os.Getenv("POSTGRES_ORDERS_PORT")
+	user := os.Getenv("POSTGRES_ORDERS_USER")
+	password := os.Getenv("POSTGRES_ORDERS_PASSWORD")
+	dbname := os.Getenv("POSTGRES_ORDERS_DB")
 
 	if host == "" || port == "" || user == "" || password == "" || dbname == "" {
 		log.Fatal("Variáveis de conexão do PostgreSQL não configuradas")
