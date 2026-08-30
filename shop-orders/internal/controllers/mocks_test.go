@@ -49,6 +49,17 @@ func (m *mockOrderRepository) List(limit, offset int) ([]*domain.Order, int, err
 	return m.ListFunc(limit, offset)
 }
 
+type mockEventPublisher struct {
+	PublishFunc func(queue string, body []byte) error
+}
+
+func (m *mockEventPublisher) Publish(queue string, body []byte) error {
+	if m.PublishFunc != nil {
+		return m.PublishFunc(queue, body)
+	}
+	return nil
+}
+
 type mockUnitOfWork struct {
 	repos repository.Repositories
 }
@@ -84,7 +95,7 @@ func newTestOrderServiceWithCustomerRepo(
 
 	idGenerator := &mockOrderIDGenerator{}
 
-	return service.NewOrderService(productRepo, orderRepo, uow, idGenerator)
+	return service.NewOrderService(productRepo, orderRepo, uow, idGenerator, &mockEventPublisher{})
 }
 
 type mockOrderIDGenerator struct {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/andreluialves/shop-orders/internal/dto"
-	"github.com/andreluialves/shop-orders/internal/pagination"
-	"github.com/andreluialves/shop-orders/internal/service"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/dto"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/pagination"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/service"
 )
 
 type OrderController struct {
@@ -122,7 +122,7 @@ func (oc *OrderController) PayOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := oc.orderService.PayOrder(id)
+	order, err := oc.orderService.PayOrder(r.Context(), id)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -130,6 +130,7 @@ func (oc *OrderController) PayOrder(w http.ResponseWriter, r *http.Request) {
 
 	response := dto.NewOrderResponse(order)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
 }
 

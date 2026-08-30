@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/andreluialves/shop-orders/shop-orders/internal/logger"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/messaging"
 	"github.com/andreluialves/shop-orders/shop-orders/internal/repository"
 
 	"github.com/andreluialves/shop-orders/shop-orders/config"
@@ -48,8 +49,15 @@ func main() {
 	orderIDGenerator := repository.NewPostgresOrderIDGenerator(db)
 	customerIDGenerator := repository.NewPostgresCustomerIDGenerator(db)
 
+	//RabbitMQ
+	rabbit, err := messaging.NewRabbitMQ(cfg.RabbitMQURL)
+	if err != nil {
+		log.Fatalf("failed to connect to rabbitmq: %v", err)
+	}
+	defer rabbit.Close()
+
 	// Services
-	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork, orderIDGenerator)
+	orderService := service.NewOrderService(loggedProductRepo, loggedOrderRepo, unitOfWork, orderIDGenerator, rabbit)
 	productService := service.NewProductService(loggedProductRepo)
 	customerService := service.NewCustomerService(loggedCustomerRepo, customerIDGenerator)
 

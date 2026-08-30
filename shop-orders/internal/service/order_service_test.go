@@ -2,43 +2,65 @@ package service_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
 	"github.com/andreluialves/shop-orders/shop-orders/internal/domain"
+	"github.com/andreluialves/shop-orders/shop-orders/internal/events"
 	"github.com/andreluialves/shop-orders/shop-orders/internal/service"
 )
 
 func TestOrderService_PayOrder(t *testing.T) {
-	t.Run("deve pagar pedido pendente com sucesso", func(t *testing.T) {
+	t.Run("deve publicar evento payment.requested e manter pedido pendente", func(t *testing.T) {
 		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
+		product := domain.RestoreProduct("P001", "Notebook", 3500, 10)
+		order.AddItem(domain.NewOrderItem(product, 2, 3500))
 
-		var updateCalled bool
+		var publishedQueue string
+		var publishedBody []byte
 
 		orderRepo := &mockOrderRepository{
 			FindByIDFunc: func(id string) (*domain.Order, error) {
 				return order, nil
 			},
-			UpdateFunc: func(o *domain.Order) error {
-				updateCalled = true
+		}
+
+		eventPublisher := &mockEventPublisher{
+			PublishFunc: func(queue string, body []byte) error {
+				publishedQueue = queue
+				publishedBody = body
 				return nil
 			},
 		}
 
-		s := newTestOrderService(&mockProductRepository{}, orderRepo)
+		s := newTestOrderServiceWithPublisher(&mockProductRepository{}, orderRepo, eventPublisher)
 
-		result, err := s.PayOrder("PED-001")
+		result, err := s.PayOrder(context.Background(), "PED-001")
 
 		if err != nil {
 			t.Fatalf("não esperava erro, recebeu %v", err)
 		}
 
-		if result.Status() != domain.OrderStatusPaid {
-			t.Errorf("esperava status PAID, recebeu %v", result.Status())
+		if result.Status() != domain.OrderStatusPending {
+			t.Errorf("esperava status PENDING (confirmação é assíncrona), recebeu %v", result.Status())
 		}
 
-		if !updateCalled {
-			t.Error("esperava que Update fosse chamado, mas não foi")
+		if publishedQueue != "payment.requested" {
+			t.Errorf("esperava publicação na fila payment.requested, recebeu %v", publishedQueue)
+		}
+
+		var event events.PaymentRequested
+		if err := json.Unmarshal(publishedBody, &event); err != nil {
+			t.Fatalf("erro ao decodificar evento publicado: %v", err)
+		}
+
+		if event.OrderID != "PED-001" {
+			t.Errorf("esperava order_id PED-001 no evento, recebeu %v", event.OrderID)
+		}
+
+		if event.Amount != 7000 {
+			t.Errorf("esperava amount 7000, recebeu %v", event.Amount)
 		}
 	})
 
@@ -51,15 +73,72 @@ func TestOrderService_PayOrder(t *testing.T) {
 
 		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
-		_, err := s.PayOrder("PED-999")
+		_, err := s.PayOrder(context.Background(), "PED-999")
 
 		if !errors.Is(err, domain.ErrOrderNotFound) {
 			t.Errorf("esperava ErrOrderNotFound, recebeu %v", err)
 		}
 	})
 
-	t.Run("não deve pagar pedido já pago, e Update não deve ser chamado", func(t *testing.T) {
+	t.Run("não deve pagar pedido já pago, e evento não deve ser publicado", func(t *testing.T) {
 		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPaid)
+
+		var publishCalled bool
+
+		orderRepo := &mockOrderRepository{
+			FindByIDFunc: func(id string) (*domain.Order, error) {
+				return order, nil
+			},
+		}
+
+		eventPublisher := &mockEventPublisher{
+			PublishFunc: func(queue string, body []byte) error {
+				publishCalled = true
+				return nil
+			},
+		}
+
+		s := newTestOrderServiceWithPublisher(&mockProductRepository{}, orderRepo, eventPublisher)
+
+		_, err := s.PayOrder(context.Background(), "PED-001")
+
+		if !errors.Is(err, domain.ErrChangeStatusInvalid) {
+			t.Errorf("esperava ErrChangeStatusInvalid, recebeu %v", err)
+		}
+
+		if publishCalled {
+			t.Error("evento não deveria ser publicado quando o pedido já está pago")
+		}
+	})
+
+	t.Run("deve propagar erro quando Publish falha", func(t *testing.T) {
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
+
+		orderRepo := &mockOrderRepository{
+			FindByIDFunc: func(id string) (*domain.Order, error) {
+				return order, nil
+			},
+		}
+
+		eventPublisher := &mockEventPublisher{
+			PublishFunc: func(queue string, body []byte) error {
+				return errors.New("falha ao conectar no rabbitmq")
+			},
+		}
+
+		s := newTestOrderServiceWithPublisher(&mockProductRepository{}, orderRepo, eventPublisher)
+
+		_, err := s.PayOrder(context.Background(), "PED-001")
+
+		if err == nil {
+			t.Error("esperava erro propagado do Publish, recebeu nil")
+		}
+	})
+}
+
+func TestOrderService_HandlePaymentResult(t *testing.T) {
+	t.Run("deve confirmar pagamento quando aprovado", func(t *testing.T) {
+		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
 
 		var updateCalled bool
 
@@ -75,35 +154,71 @@ func TestOrderService_PayOrder(t *testing.T) {
 
 		s := newTestOrderService(&mockProductRepository{}, orderRepo)
 
-		_, err := s.PayOrder("PED-001")
+		err := s.HandlePaymentResult(context.Background(), "PED-001", "APPROVED")
 
-		if !errors.Is(err, domain.ErrChangeStatusInvalid) {
-			t.Errorf("esperava ErrChangeStatusInvalid, recebeu %v", err)
+		if err != nil {
+			t.Fatalf("não esperava erro, recebeu %v", err)
 		}
 
-		if updateCalled {
-			t.Error("Update não deveria ter sido chamado quando Pay() falha")
+		if order.Status() != domain.OrderStatusPaid {
+			t.Errorf("esperava status PAID, recebeu %v", order.Status())
+		}
+
+		if !updateCalled {
+			t.Error("esperava que Update fosse chamado")
 		}
 	})
 
-	t.Run("deve propagar erro quando Update falha", func(t *testing.T) {
+	t.Run("deve cancelar pedido e restaurar estoque quando recusado", func(t *testing.T) {
+		product := domain.RestoreProduct("P001", "Notebook", 3500, 5)
 		order := domain.RestoreOrder("PED-001", "CUST-001", domain.OrderStatusPending)
+		order.AddItem(domain.NewOrderItem(product, 2, 3500))
+
+		var savedQuantity int
 
 		orderRepo := &mockOrderRepository{
 			FindByIDFunc: func(id string) (*domain.Order, error) {
 				return order, nil
 			},
 			UpdateFunc: func(o *domain.Order) error {
-				return errors.New("erro de conexão com banco")
+				return nil
 			},
 		}
 
-		s := newTestOrderService(&mockProductRepository{}, orderRepo)
+		productRepo := &mockProductRepository{
+			FindByIDFunc: func(id string) (*domain.Product, error) {
+				return domain.RestoreProduct("P001", "Notebook", 3500, 5), nil
+			},
+			SaveFunc: func(p *domain.Product) error {
+				savedQuantity = p.Quantity
+				return nil
+			},
+		}
 
-		_, err := s.PayOrder("PED-001")
+		s := newTestOrderService(productRepo, orderRepo)
+
+		err := s.HandlePaymentResult(context.Background(), "PED-001", "DECLINED")
+
+		if err != nil {
+			t.Fatalf("não esperava erro, recebeu %v", err)
+		}
+
+		if order.Status() != domain.OrderStatusCanceled {
+			t.Errorf("esperava status CANCELED, recebeu %v", order.Status())
+		}
+
+		if savedQuantity != 7 {
+			t.Errorf("esperava estoque restaurado para 7, recebeu %v", savedQuantity)
+		}
+	})
+
+	t.Run("deve retornar erro para status desconhecido", func(t *testing.T) {
+		s := newTestOrderService(&mockProductRepository{}, &mockOrderRepository{})
+
+		err := s.HandlePaymentResult(context.Background(), "PED-001", "UNKNOWN_STATUS")
 
 		if err == nil {
-			t.Error("esperava erro propagado do Update, recebeu nil")
+			t.Error("esperava erro para status desconhecido")
 		}
 	})
 }
