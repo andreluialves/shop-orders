@@ -2,13 +2,6 @@
 
 Projeto desenvolvido em Go para estudo de arquitetura em camadas, boas práticas de desenvolvimento, criação de APIs REST e aplicação de regras de negócio no gerenciamento de produtos e pedidos.
 
-## Tecnologias
-
-* Go
-* PostgreSQL
-* Docker
-* REST API
-
 ## Funcionalidades
 
 ### Fase 1 - Domínio e regras de negócio e persistẽncia em memória
@@ -32,6 +25,18 @@ Projeto desenvolvido em Go para estudo de arquitetura em camadas, boas práticas
 * Implementação da API REST de clientes
 * Persistência de dados utilizando PostgreSQL
 * Ambiente de banco de dados configurado com Docker
+
+### Fase 3 - Mensageria e Saga
+
+* Criação de pedidos com transação
+* Cadastrar clientes
+* Listar clientes
+* Criar pedido para um cliente
+* Buscar cliente por id
+* Serviço de pagamentos "Payment" escrito em microserviço (módulo separado)
+* Comunicação assíncrona por mensageria
+* Uma Saga para coordenar um fluxo distribuído
+* Logs estruturados que permitam acompanhar o fluxo entre os serviços.
 
 Endpoints implementados atualmente:
 
@@ -61,10 +66,10 @@ GET  /customers/{id}
 POST /customers
 ```
 
-## Estrutura do Projeto
+## Estrutura do Serviço
 
 ```text
-.
+
 ├── cmd
 │   ├── app
 │   │   └── main.go
@@ -72,7 +77,7 @@ POST /customers
 │       └── main.go
 ├── config
 │   └── config.go
-├── docker-compose.yml
+├── coverage.out
 ├── go.mod
 ├── go.sum
 ├── internal
@@ -100,9 +105,14 @@ POST /customers
 │   │   ├── customer_dto.go
 │   │   ├── order_dto.go
 │   │   └── product_dto.go
+│   ├── events
+│   │   └── events.go
 │   ├── logger
 │   │   ├── logger.go
 │   │   └── slog_logger.go
+│   ├── messaging
+│   │   ├── handler.go
+│   │   └── rabbitmq.go
 │   ├── pagination
 │   │   └── pagination.go
 │   ├── repository
@@ -138,6 +148,7 @@ POST /customers
 │       ├── order_service_test.go
 │       ├── product_service.go
 │       └── product_service_test.go
+├── Makefile
 ├── migrations
 │   ├── 000001_create_products.down.sql
 │   ├── 000001_create_products.up.sql
@@ -153,79 +164,27 @@ POST /customers
 │   ├── 000006_create_customers_id_seq.up.sql
 │   ├── 000007_add_customer_id_to_orders.down.sql
 │   └── 000007_add_customer_id_to_orders.up.sql
-├── Makefile
 ├── README.md
 └── seeds
     ├── 100001_seed_products.down.sql
     └── 100001_seed_products.up.sql
 ```
 
-## Como clonar o projeto
-
-Clone o repositório utilizando o Git:
-
-```bash
-git clone https://github.com/andreluialves/shop-orders.git
-```
-
-Acesse a pasta do projeto:
-
-```bash
-cd shop-orders
-```
-
-## Como executar localmente
-
-### Pré-requisitos
-
-* Go 1.24 ou superior instalado
-* Docker e Docker Compose
-* Git
-
-Verifique a versão do Go instalada:
-
-```bash
-go version
-```
-
-Verifique a instalação do Docker:
-
-```bash
-docker --version
-```
-
-## Configuração do banco de dados
-
-O projeto utiliza PostgreSQL executado através de Docker para persistência dos dados.
-
-Suba os containers:
-
-```bash
-docker compose up -d
-```
-
-O banco ficará disponível para a aplicação conforme as configurações definidas no arquivo de ambiente do projeto.
-
-## Instalar dependências
-
-Execute:
-
-```bash
-go mod tidy
-```
-
 ## Executar a aplicação
+
+### Rodando
+
 
 Na raiz do projeto execute:
 
 ```bash
-go run ./cmd/app/
+make run
 ```
 
-ou
+### Migrations
 
 ```bash
-go run ./cmd/app/main.go
+make migrate-up
 ```
 
 A API será iniciada localmente e ficará disponível para consumo através dos endpoints implementados.
@@ -249,22 +208,9 @@ Durante a evolução do projeto são demonstrados:
 * Cadastrar clientes
 * Listar clientes
 * Criar pedido para um cliente
-* Buscar cliente por id;
-
-## Próximas etapas
-
-A Fase 3 encontra-se em andamento e terá como próximos objetivos:
-
+* Buscar cliente por id
 * Pelo penos uma capacidade do sistema será escrita para um microserviço
 * Comunicação assíncrona por mensageria
 * Uma Saga para coordenar um fluxo distribuído
 * Logs estruturados que permitam acompanhar o fluxo entre os serviços.
-
-## Acompanhamento do Projeto
-
-O desenvolvimento do projeto é acompanhado através de um **Project Board** do GitHub, onde são organizadas as tarefas, melhorias, correções e novas funcionalidades planejadas.
-
-O board pode ser acessado através do link:
-
-[GitHub Project Board](https://github.com/users/andreluialves/projects/9/views/2)
 

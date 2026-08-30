@@ -36,7 +36,7 @@ func (r *PostgresPaymentRepository) Save(payment *domain.Payment) error {
 		payment.ID,
 		payment.OrderID,
 		payment.Amount,
-		payment.Status,
+		string(payment.Status()),
 	)
 
 	return err
